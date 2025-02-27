@@ -8,9 +8,8 @@
 <br />
 <div align="center">
   <a href="https://github.com/kaiyofx/lingwo">
-    <img src="media/banner.png" alt="Logo" width="80" height="80">
+    <img src="media/banner.png" alt="Logo">
   </a>
-
 <h3 align="center">Лингво</h3>
 
   <p align="center">
