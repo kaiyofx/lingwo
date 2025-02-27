@@ -68,7 +68,8 @@
 
 ## Переменные
 
-`OPENAI_API_KEY` - api-ключ для gpt-4o (обязательно)
+
+`OPENAI_API_KEY` - api-ключ для gpt-4o (обязательно)<br/>
 `PROXY_SERVER_URL` - прокси-сервер для работы gpt-4o
 
 ## Функционал
