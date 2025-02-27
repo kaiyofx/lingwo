@@ -1,0 +1,44 @@
+services:
+  chroma:
+    image: chromadb/chroma
+    container_name: chroma
+    volumes:
+      - './database:/chroma/chroma'
+    restart: unless-stopped
+    healthcheck:
+      test: curl -f http://0.0.0.0:8000/api/v2/heartbeat || exit 1
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+    ports:
+      - '8000:8000'
+  chroma-init:
+    build: ./chroma
+    container_name: chroma-init
+    volumes:
+      - ./models:/root/.cache/chroma/onnx_models
+    restart: no
+    depends_on:
+      chroma:
+        condition: service_healthy
+    ports:
+      - 4242:4242
+  lingwo:
+    build: ./frontend
+    container_name: lingwo
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PROXY_SERVER_URL=${PROXY_SERVER_URL}
+    restart: unless-stopped
+    volumes:
+      - ./models:/root/.cache/chroma/onnx_models'
+    depends_on:
+      chroma-init:
+        condition: service_completed_successfully
+    ports:
+      - '80:80'
+      - '443:443'
+networks:
+  default:
+    driver: bridge
+    name: lingwo-network
