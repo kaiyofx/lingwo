@@ -65,7 +65,7 @@
    docker compose up -d
    ```
 
-## Переменные
+### Переменные
 
 
 `OPENAI_API_KEY` - api-ключ для gpt-4o (обязательно)<br/>
