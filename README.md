@@ -7,7 +7,7 @@
 
 <br />
 <div align="center">
-  <a href="http://lingwo.ru">
+  <a href="https://lingwo.ru">
     <img src="media/banner.png" alt="Logo">
   </a>
 <h3 align="center">Лингво</h3>
@@ -15,7 +15,7 @@
   <p align="center">
     ИИ-репетитор для подготовки к экзамену по русскому языку
     <br />
-    <a href="http://lingwo.ru">Демо</a>
+    <a href="https://lingwo.ru">Демо</a>
     &middot;
     <a href="https://github.com/kaiyofx/lingwo/issues/new?labels=bug&template=bug-report---.md">Сообщить об ошибке</a>
   </p>
