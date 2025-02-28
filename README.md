@@ -42,7 +42,7 @@
 
 ## О проекте
 
-#<video src='media/test.mp4' width="180"/>
+https://github.com/user-attachments/assets/a5b35426-285e-464b-832a-1a06247ea041
 
 **Лингво** - сервис для подготовки школьников к экзамену (сочинение) по
 русскому языку. Работает за счет связки модели gpt-4o и векторной базы данных [Chroma](https://github.com/chroma-core/chroma).
