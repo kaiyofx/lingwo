@@ -1,1 +1,2 @@
-comprasion_of_model_reports
+<img src='Bert.png'/>
+<img src='Rouges.png'/>
