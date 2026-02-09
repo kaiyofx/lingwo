@@ -1,0 +1,45 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@tanstack/vue-query": "^5.62.0",
+    "@auth/core": "^0.34.3",
+    "@nuxt/image": "^1.10.0",
+    "@sidebase/nuxt-auth": "^1.1.1",
+    "@tailwindcss/vite": "^4.1.11",
+    "@unovis/ts": "^1.6.2",
+    "@unovis/vue": "^1.6.2",
+    "@vueuse/core": "^13.9.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "jwt-decode": "^4.0.0",
+    "lucide-vue-next": "^0.525.0",
+    "next-auth": "^4.21.1",
+    "nuxt": "^3.21.0",
+    "pinia": "^3.0.3",
+    "pinia-plugin-persistedstate": "^4.4.1",
+    "reka-ui": "^2.7.0",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss": "^4.1.11",
+    "vue": "^3.5.27",
+    "vue-router": "^4.6.4",
+    "vue-sonner": "^1.2.1"
+  },
+  "devDependencies": {
+    "@nuxtjs/google-fonts": "^3.2.0",
+    "@pinia/nuxt": "^0.11.1",
+    "@types/node": "^25.0.10",
+    "nuxt-lucide-icons": "^1.0.5",
+    "shadcn-nuxt": "^2.2.0",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.2.3"
+  }
+}

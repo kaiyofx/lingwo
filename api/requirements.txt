@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-dotenv
+httpx
+python-jose[cryptography]
+redis
+sqlalchemy
+asyncpg
+chromadb
+llama-cpp-python

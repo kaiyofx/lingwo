@@ -1,0 +1,137 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-10-19 00:31+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
+"(n%100>=11 && n%100<=14)? 2 : 3);\n"
+
+#: .\users\models.py:11
+msgid "Owner"
+msgstr ""
+
+#: .\users\models.py:12
+msgid "Admin"
+msgstr "Админ"
+
+#: .\users\models.py:13
+msgid "Manager"
+msgstr "Менеджер"
+
+#: .\users\models.py:14
+msgid "Client"
+msgstr "Клиент"
+
+#: .\users\models.py:21
+msgid "username"
+msgstr "Имя пользователя"
+
+#: .\users\models.py:22
+msgid "email"
+msgstr "Электронная почта"
+
+#: .\users\models.py:26
+msgid "Code"
+msgstr ""
+
+#: .\users\models.py:27
+msgid "active"
+msgstr ""
+
+#: .\users\models.py:28
+msgid "date joined"
+msgstr ""
+
+#: .\users\models.py:29
+msgid "updated at"
+msgstr ""
+
+#: .\users\models.py:33
+msgid "role"
+msgstr "роль"
+
+#: .\users\models.py:41
+msgid "groups"
+msgstr "группы"
+
+#: .\users\models.py:43
+msgid "The groups this user belongs to."
+msgstr "Группы, к которым принадлежит этот пользователь."
+
+#: .\users\models.py:49
+msgid "user permissions"
+msgstr "разрешения пользователя"
+
+#: .\users\models.py:51
+msgid "Specific permissions for this user."
+msgstr "Конкретные разрешения для этого пользователя."
+
+#: .\users\models.py:66
+msgid "user"
+msgstr "пользователь"
+
+#: .\users\models.py:67
+msgid "users"
+msgstr "пользователи"
+
+#: .\users\views.py:101
+msgid "your code for registration"
+msgstr "Ваш код для регистрации"
+
+#: .\users\views.py:102
+msgid "your code:"
+msgstr "Ваш код:"
+
+#: .\users\views.py:104
+#, fuzzy, python-brace-format
+#| msgid "They is valid for 5 minutes."
+msgid "They is valid for {OTP_TIMEOUT} minutes."
+msgstr "Он действителен в течение {OTP_TIMEOUT} минут."
+
+#: .\users\views.py:110
+msgid "Code sent. Please check your email to verify."
+msgstr ""
+"Код отправлен. Пожалуйста, проверьте свою электронную почту для "
+"подтверждения."
+
+#: .\users\views.py:117
+msgid "Internal server error. Please try again later."
+msgstr "Внутренняя ошибка сервера. Пожалуйста, попробуйте позже."
+
+#: .\users\views.py:152
+msgid "Code expired or not found. Please request a new code."
+msgstr "Код истек или не найден. Пожалуйста, запросите новый код."
+
+#: .\users\views.py:158
+msgid "Invalid code."
+msgstr "Неверный код."
+
+#: .\users\views.py:169
+msgid "Code verified."
+msgstr "Код подтвержден."
+
+#: .\users\views.py:207
+msgid "Token expired or not found. Please request a new code."
+msgstr "Токен истек или не найден. Пожалуйста, запросите новый код."
+
+#: .\users\views.py:218
+msgid "Registration completed!"
+msgstr "Регистрация завершена!"
+
+#: .\users\views.py:224
+msgid "Error during registration:"
+msgstr "Ошибка при регистрации:"

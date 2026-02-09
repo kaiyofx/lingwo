@@ -1,0 +1,136 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-10-19 00:31+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\users\models.py:11
+msgid "Owner"
+msgstr "Eigentümer"
+
+#: .\users\models.py:12
+msgid "Admin"
+msgstr "Administrator"
+
+#: .\users\models.py:13
+msgid "Manager"
+msgstr "Manager"
+
+#: .\users\models.py:14
+msgid "Client"
+msgstr "Kunde"
+
+#: .\users\models.py:21
+msgid "username"
+msgstr "Benutzername"
+
+#: .\users\models.py:22
+msgid "email"
+msgstr "E-Mail"
+
+#: .\users\models.py:26
+msgid "Code"
+msgstr ""
+
+#: .\users\models.py:27
+msgid "active"
+msgstr ""
+
+#: .\users\models.py:28
+msgid "date joined"
+msgstr ""
+
+#: .\users\models.py:29
+msgid "updated at"
+msgstr ""
+
+#: .\users\models.py:33
+msgid "role"
+msgstr "Rolle"
+
+#: .\users\models.py:41
+msgid "groups"
+msgstr "Gruppen"
+
+#: .\users\models.py:43
+msgid "The groups this user belongs to."
+msgstr "Die Gruppen, zu denen dieser Benutzer gehört."
+
+#: .\users\models.py:49
+msgid "user permissions"
+msgstr "Benutzerberechtigungen"
+
+#: .\users\models.py:51
+msgid "Specific permissions for this user."
+msgstr "Spezifische Berechtigungen für diesen Benutzer."
+
+#: .\users\models.py:66
+msgid "user"
+msgstr "Benutzer"
+
+#: .\users\models.py:67
+msgid "users"
+msgstr "Benutzer"
+
+#: .\users\views.py:101
+msgid "your code for registration"
+msgstr "Ihr Code für die Registrierung"
+
+#: .\users\views.py:102
+msgid "your code:"
+msgstr "Ihr Code:"
+
+#: .\users\views.py:104
+#, fuzzy, python-brace-format
+#| msgid "They is valid for 5 minutes."
+msgid "They is valid for {OTP_TIMEOUT} minutes."
+msgstr "Er ist {OTP_TIMEOUT} Minuten lang gültig."
+
+#: .\users\views.py:110
+msgid "Code sent. Please check your email to verify."
+msgstr "Code gesendet. Bitte überprüfen Sie Ihre E-Mail zur Bestätigung."
+
+#: .\users\views.py:117
+msgid "Internal server error. Please try again later."
+msgstr "Interner Serverfehler. Bitte versuchen Sie es später erneut."
+
+#: .\users\views.py:152
+msgid "Code expired or not found. Please request a new code."
+msgstr ""
+"Code abgelaufen oder nicht gefunden. Bitte versuchen Sie ein neues Code zu "
+"erhalten"
+
+#: .\users\views.py:158
+msgid "Invalid code."
+msgstr "Ungültiger Code."
+
+#: .\users\views.py:169
+msgid "Code verified."
+msgstr "Code verifiziert."
+
+#: .\users\views.py:207
+msgid "Token expired or not found. Please request a new code."
+msgstr ""
+"Token abgelaufen oder nicht gefunden. Bitte fordern Sie einen neuen Code an."
+
+#: .\users\views.py:218
+msgid "Registration completed!"
+msgstr "Registrierung abgeschlossen!"
+
+#: .\users\views.py:224
+msgid "Error during registration:"
+msgstr "Fehler bei der Registrierung:"

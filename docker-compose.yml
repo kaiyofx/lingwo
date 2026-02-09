@@ -1,0 +1,109 @@
+services:
+  pg:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-1234}
+      POSTGRES_DB: ${PG_NAME:-lingwo}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-postgres} -d ${PG_NAME:-lingwo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  chroma:
+    image: chromadb/chroma:0.6.3
+    restart: unless-stopped
+    ports:
+      - "8002:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  chroma-init:
+    build:
+      context: ./chroma
+    depends_on:
+      chroma:
+        condition: service_healthy
+    restart: "no"
+    environment:
+      CHROMA_SERVER_HOST: chroma
+      CHROMA_SERVER_HTTP_PORT: 8000
+
+  api:
+    build:
+      context: ./api
+    restart: unless-stopped
+    depends_on:
+      pg:
+        condition: service_healthy
+      chroma-init:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${PG_USER:-postgres}:${PG_PASSWORD:-1234}@pg:5432/${PG_NAME:-lingwo}
+    ports:
+      - "8001:8001"
+
+  frontend:
+    build:
+      context: ./lingwo
+    restart: unless-stopped
+    depends_on:
+      chroma-init:
+        condition: service_completed_successfully
+    ports:
+      - "3000:3000"
+
+  auth:
+    image: lingwo_auth
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+    build:
+      context: ./auth
+    # depends_on:
+    #   pg:
+    #     condition: service_healthy
+    #   redis:
+    #     condition: service_healthy
+    environment:
+      OTP_TIMEOUT: 5
+      REG_TOKEN_TIMEOUT: 10
+      ACCESS_TOKEN_LIFETIME: 720
+      REFRESH_TOKEN_LIFETIME: 365
+      PEPPERED_PASSWORDS_SECRET_KEY: "18629634096cf6865346zab7936c8a89e5f6047cd3abdbb2cf8eb1956bc6bc387"
+      DJANGO_SETTINGS_MODULE: auth_service.settings
+      SECRET_KEY: ${AUTHSECRET_KEY}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_HOST_PORT: ${EMAIL_HOST_PORT}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
+      SIGNING_KEY: ${SIGNING_KEY}
+      VERIFYING_KEY: ${VERIFYING_KEY}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_URL: redis://${REDIS_HOST}:${REDIS_PORT}/0
+      DB_NAME: ${PG_NAME}
+      DB_USER: ${PG_USER}
+      DB_PASSWORD: ${PG_PASSWORD}
+      DB_HOST: ${PG_HOST}
+      DB_PORT: ${PG_PORT}
+      TZ: ${TZ}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://auth:8000/health/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    ports:
+      - 8000:8000
+
+volumes:
+  pgdata:

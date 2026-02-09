@@ -1,0 +1,134 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-10-19 00:32+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? "
+"1 : 2;\n"
+
+#: .\users\models.py:11
+msgid "Owner"
+msgstr "Propietario"
+
+#: .\users\models.py:12
+msgid "Admin"
+msgstr "Administrador"
+
+#: .\users\models.py:13
+msgid "Manager"
+msgstr "Gerente"
+
+#: .\users\models.py:14
+msgid "Client"
+msgstr "Cliente"
+
+#: .\users\models.py:21
+msgid "username"
+msgstr "Nombre de usuario"
+
+#: .\users\models.py:22
+msgid "email"
+msgstr "Correo electrónico"
+
+#: .\users\models.py:26
+msgid "Code"
+msgstr ""
+
+#: .\users\models.py:27
+msgid "active"
+msgstr ""
+
+#: .\users\models.py:28
+msgid "date joined"
+msgstr ""
+
+#: .\users\models.py:29
+msgid "updated at"
+msgstr ""
+
+#: .\users\models.py:33
+msgid "role"
+msgstr "Rol"
+
+#: .\users\models.py:41
+msgid "groups"
+msgstr "grupos"
+
+#: .\users\models.py:43
+msgid "The groups this user belongs to."
+msgstr "Los grupos a los que pertenece este usuario."
+
+#: .\users\models.py:49
+msgid "user permissions"
+msgstr "Permisos de usuario"
+
+#: .\users\models.py:51
+msgid "Specific permissions for this user."
+msgstr "Permisos específicos para este usuario."
+
+#: .\users\models.py:66
+msgid "user"
+msgstr "Usuario"
+
+#: .\users\models.py:67
+msgid "users"
+msgstr "Usuarios"
+
+#: .\users\views.py:101
+msgid "your code for registration"
+msgstr "Tu código de registro"
+
+#: .\users\views.py:102
+msgid "your code:"
+msgstr "Tu código:"
+
+#: .\users\views.py:104
+#, fuzzy, python-brace-format
+#| msgid "They is valid for 5 minutes."
+msgid "They is valid for {OTP_TIMEOUT} minutes."
+msgstr "Es válido por {OTP_TIMEOUT} minutos."
+
+#: .\users\views.py:110
+msgid "Code sent. Please check your email to verify."
+msgstr "Código enviado. Por favor, revisa tu correo para verificar."
+
+#: .\users\views.py:117
+msgid "Internal server error. Please try again later."
+msgstr "Error interno del servidor. Por favor, inténtalo de nuevo más tarde."
+
+#: .\users\views.py:152
+msgid "Code expired or not found. Please request a new code."
+msgstr "Código caducado o no encontrado. Por favor, solicita un nuevo código."
+
+#: .\users\views.py:158
+msgid "Invalid code."
+msgstr "Código inválido."
+
+#: .\users\views.py:169
+msgid "Code verified."
+msgstr "Código verificado."
+
+#: .\users\views.py:207
+msgid "Token expired or not found. Please request a new code."
+msgstr "Token caducado o no encontrado. Por favor, solicita un nuevo código."
+
+#: .\users\views.py:218
+msgid "Registration completed!"
+msgstr "¡Registro completado!"
+
+#: .\users\views.py:224
+msgid "Error during registration:"
+msgstr "Error durante el registro:"

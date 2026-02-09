@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LOG IN</title>
+</head>
+
+<body>
+    <h1>LOG IN OAuth2</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <input type="hidden" name="next" value="{{ next }}" />
+        <button type="submit">LOG IN</button>
+    </form>
+
+    {% if form.errors %}
+    <p style="color: red;">Error</p>
+    {% endif %}
+</body>
+
+</html>
