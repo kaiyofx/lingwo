@@ -58,7 +58,7 @@
    ```sh
    cd lingwo
    ```
-3. Создайте файл `.env` в корне и задайте переменные (см. раздел «Переменные»). Обязательно укажите `OPENAI_API_KEY`.
+3. Создайте файл `.env` в корне и задайте переменные (см. раздел «Переменные»).
 4. Запустите все сервисы:
    ```sh
    docker compose up -d
@@ -74,17 +74,15 @@
 
 ### Переменные
 
-**API и модель:**
-- `OPENAI_API_KEY` — API-ключ для gpt-4o (обязательно)
-- `PROXY_SERVER_URL` — прокси-сервер для работы gpt-4o (по желанию)
+**PostgreSQL** (сервисы `pg`, `api`; для auth при использовании той же БД):
+- `PG_USER`, `PG_PASSWORD`, `PG_NAME` — пользователь, пароль, имя БД (в compose по умолчанию: `postgres`, `1234`, `lingwo`)
+- При запуске через Docker для auth: `PG_HOST=pg`, `PG_PORT=5432`
 
-**PostgreSQL** (для сервисов `pg`, `api`; при использовании auth с той же БД — и для auth):
-- `PG_USER` — пользователь (по умолчанию `postgres`)
-- `PG_PASSWORD` — пароль (по умолчанию `1234`)
-- `PG_NAME` — имя БД (по умолчанию `lingwo`)
-- Для auth при запуске через Docker: `PG_HOST=pg`, `PG_PORT=5432`
+**Redis** (auth, api): `REDIS_URL`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
 
-Остальные переменные для auth (email, Redis, ключи и т.д.) задаются в `.env` по необходимости.
+**API**: `DATABASE_URL` в compose собирается из PG_*; при необходимости — `CHROMA_HOST`, `CHROMA_PORT`, `LLAMA_MODEL_PATH`, `THEMES_PATH`
+
+**Auth**: `AUTHSECRET_KEY`, `SIGNING_KEY`, `VERIFYING_KEY`, `AUTH_SECRET`, переменные для почты (`EMAIL_HOST`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` и т.д.) — см. `.env.example` или существующий `.env`
 
 ## Функционал
 
