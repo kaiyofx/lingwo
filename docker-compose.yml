@@ -3,15 +3,15 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${PG_USER:-postgres}
-      POSTGRES_PASSWORD: ${PG_PASSWORD:-1234}
-      POSTGRES_DB: ${PG_NAME:-lingwo}
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_NAME}
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
       - prod-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-postgres} -d ${PG_NAME:-lingwo}"]
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5

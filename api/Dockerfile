@@ -11,9 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Копируем в /app/api, чтобы импорт api.main работал при PYTHONPATH=/app
+COPY . /app/api
 
-# uvicorn run from project root (api.main:APP)
 ENV PYTHONPATH=/app
 EXPOSE 8001
 
