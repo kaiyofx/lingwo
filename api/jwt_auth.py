@@ -6,7 +6,7 @@ import asyncio
 import httpx
 from fastapi import HTTPException
 
-JWKS_URL: str = os.environ.get("JWKS_URL", "http://localhost:8000/.well-known/jwks.json")
+JWKS_URL: str = os.environ.get("JWKS_URL", "http://auth-lingwo:8000/.well-known/jwks.json")
 
 
 class Claims(BaseModel):
