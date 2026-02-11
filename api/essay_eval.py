@@ -225,19 +225,19 @@ def validate_theme_sync(theme: str) -> dict[str, Any]:
     out = model(
         prompt,
         max_tokens=128,
-        temperature=0.2,
+        temperature=0,  # детерминированность: одна и та же тема — один и тот же результат
         stop=["</s>", "\n\n"],
     )
     response_text = (out.get("choices") or [{}])[0].get("text", "").strip()
     if not response_text:
-        return {"valid": True, "message": ""}
+        return {"valid": False, "message": "Не удалось проверить тему. Попробуйте ещё раз."}
     try:
         raw = _extract_json(response_text)
-        valid = bool(raw.get("valid", True))
+        valid = bool(raw.get("valid", False))
         message = str(raw.get("message", "")) or ""
-        return {"valid": valid, "message": message}
+        return {"valid": valid, "message": message or ("Тема не прошла проверку." if not valid else "")}
     except json.JSONDecodeError:
-        return {"valid": True, "message": ""}
+        return {"valid": False, "message": "Не удалось проверить тему. Попробуйте ещё раз."}
 
 
 def evaluate_essay_sync(theme: str, text: str, essay_type: str = "essay") -> dict[str, Any]:
