@@ -31,8 +31,6 @@ services:
   chroma:
     image: chromadb/chroma:0.6.3
     restart: unless-stopped
-    ports:
-      - "8002:8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
       interval: 10s
@@ -113,6 +111,8 @@ services:
     build:
       context: ./auth
     depends_on:
+      pg:
+        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
