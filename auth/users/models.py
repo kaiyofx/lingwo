@@ -16,7 +16,7 @@ class UserRoles(models.IntegerChoices):
 class Role(models.Model):
     name = models.CharField(max_length=50, unique=True, db_index=True)
     class Meta:
-        db_table = 'roles'
+        db_table = 'role'
         managed = False
     def __str__(self):
         return self.name
