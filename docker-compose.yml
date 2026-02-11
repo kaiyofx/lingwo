@@ -52,7 +52,7 @@ services:
     networks:
       - prod-network
     environment:
-      CHROMA_SERVER_HOST: chroma
+      CHROMA_SERVER_HOST: chroma-lingwo
       CHROMA_SERVER_HTTP_PORT: 8000
 
   api-lingwo:
