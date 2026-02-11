@@ -72,6 +72,8 @@ services:
       REDIS_HOST: redis-lingwo
       REDIS_PORT: "6379"
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      CHROMA_HOST: chroma-lingwo
+      CHROMA_PORT: 8000
     volumes:
       - ./chroma/all_themes.txt:/app/chroma/all_themes.txt
       - ..:/host_data
