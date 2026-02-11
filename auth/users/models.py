@@ -28,11 +28,11 @@ class ABSUser(AbstractUser):
     last_name = None
     username = models.CharField(_("username"), max_length=40, blank=False, unique=True)
     email = models.EmailField(_("email"), max_length=254, blank=False, unique=True)
-    otp = models.BooleanField(_("Code"), default=False)
+    otp = models.BooleanField(_("Code"), default=False, db_column="OTP")
     is_active = models.BooleanField(_("active"), default=True)
     date_joined = models.DateTimeField(_("date joined"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
-    otp_only = models.BooleanField(_("otp only"), default=False)
+    otp_only = models.BooleanField(_("otp only"), default=False, db_column="OTP_only")
     is_deleted = models.BooleanField(_("deleted"), default=False)
     deleted_at = models.DateTimeField(_("deleted at"), null=True, blank=True)
     failed_login_attempts = models.IntegerField(default=0)

@@ -12,7 +12,7 @@ class UserProfileSerializer(ModelSerializer):
         fields = (
             "id", "username", "email",
             "date_joined", "updated_at", "role",
-            "OTP", "is_active", "OTP_only",
+            "otp", "is_active", "otp_only",
         )
         read_only_fields = (
             "id", "email", "date_joined", "username", "updated_at", 
@@ -28,7 +28,7 @@ class UserProfileSerializer(ModelSerializer):
 
         if not is_owner and self.instance:
             
-            private_fields = ('OTP', 'OTP_only', 'updated_at')
+            private_fields = ('otp', 'otp_only', 'updated_at')
             for field_name in private_fields:
                 self.fields.pop(field_name, None)
 

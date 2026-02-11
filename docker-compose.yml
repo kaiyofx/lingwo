@@ -37,7 +37,7 @@ services:
       - prod-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://chroma-lingwo:8000/api/v1/heartbeat"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
       start_period: 10s
