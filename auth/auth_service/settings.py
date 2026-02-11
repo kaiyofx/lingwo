@@ -47,8 +47,7 @@ DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = [
     '0.0.0.0',
-    'auth-dev',
-    'auth',
+    'auth-lingwo',
     "localhost",
     '127.0.0.1',
 ]
