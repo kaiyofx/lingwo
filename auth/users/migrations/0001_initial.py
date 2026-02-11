@@ -106,7 +106,6 @@ class Migration(migrations.Migration):
                 "verbose_name": "user",
                 "verbose_name_plural": "users",
                 "db_table": "users",
-                "managed": False,
             },
             managers=[
                 ("objects", django.contrib.auth.models.UserManager()),
@@ -128,7 +127,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 "db_table": "role",
-                "managed": False,
             },
         ),
     ]
