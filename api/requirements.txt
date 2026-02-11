@@ -6,5 +6,5 @@ python-jose[cryptography]
 redis
 sqlalchemy
 asyncpg
-chromadb
+chromadb==0.6.3
 llama-cpp-python

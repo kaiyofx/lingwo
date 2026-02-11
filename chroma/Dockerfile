@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     software-properties-common \
     && rm -rf /var/lib/apt/lists/*
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-RUN pip install chromadb
 EXPOSE 4242
 CMD [ "python", "./chroma_init.py" ]
