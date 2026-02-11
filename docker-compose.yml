@@ -67,7 +67,7 @@ services:
       chroma-init:
         condition: service_completed_successfully
     environment:
-      DATABASE_URL: postgresql+asyncpg://${PG_USER:-postgres}:${PG_PASSWORD:-1234}@pg:5432/${PG_NAME:-lingwo}
+      DATABASE_URL: postgresql+asyncpg://${PG_USER:-postgres}:${PG_PASSWORD:-1234}@pg-lingwo:5432/${PG_NAME:-lingwo}
       LLAMA_MODEL_PATH: /host_data
       REDIS_HOST: redis
       REDIS_PORT: "6379"
