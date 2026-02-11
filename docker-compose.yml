@@ -30,6 +30,20 @@ services:
     networks:
       - prod-network
 
+  geo-check-lingwo:
+    build:
+      context: ./geo-check
+    restart: unless-stopped
+    environment:
+      GEO_ALLOWED_COUNTRIES: ${GEO_ALLOWED_COUNTRIES:-RU}
+      GEO_ALLOW_UNKNOWN: ${GEO_ALLOW_UNKNOWN:-0}
+    networks:
+      - prod-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.geo-ru.forwardauth.address=http://geo-check-lingwo:8080"
+      - "traefik.http.middlewares.geo-ru.forwardauth.trustForwardHeader=true"
+
   chroma-lingwo:
     image: chromadb/chroma:0.6.3
     restart: unless-stopped
@@ -84,6 +98,7 @@ services:
       - "traefik.http.routers.api-lingwo.rule=Host(`api.lingwo.ru`)"
       - "traefik.http.routers.api-lingwo.entrypoints=websecure"
       - "traefik.http.routers.api-lingwo.tls.certresolver=le"
+      - "traefik.http.routers.api-lingwo.middlewares=geo-ru@docker"
       - "traefik.http.services.api-lingwo.loadbalancer.server.port=8001"
 
   frontend-lingwo:
@@ -109,6 +124,7 @@ services:
       - "traefik.http.routers.frontend-lingwo.rule=Host(`lingwo.ru`)"
       - "traefik.http.routers.frontend-lingwo.entrypoints=websecure"
       - "traefik.http.routers.frontend-lingwo.tls.certresolver=le"
+      - "traefik.http.routers.frontend-lingwo.middlewares=geo-ru@docker"
       - "traefik.http.services.frontend-lingwo.loadbalancer.server.port=3000"
 
   auth-lingwo:

@@ -25,6 +25,7 @@ from api.db import AsyncSessionLocal, get_session, init_db
 from api.essay_eval import evaluate_essay_sync, validate_theme_sync
 from api.jwt_auth import Claims, decode_token_async
 from api.models import Essay, UserSettings
+from api.rate_limit import check_model_rate_limit
 from api.redis_client import redis_client
 from api.schemas import (
     EssayDetailResponse,
@@ -87,6 +88,12 @@ async def get_current_user(
             status_code=401,
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+async def require_model_rate_limit(claim: Claims = Depends(get_current_user)) -> None:
+    """Зависимость: проверка лимита запросов к модели (тема + оценка), 429 при превышении."""
+    if claim and claim.user_id:
+        await check_model_rate_limit(claim.user_id)
 
 
 def _get_themes_path() -> Path:
@@ -230,6 +237,7 @@ async def random_topic(
 @APP.post("/start_essay", response_model=EssayState)
 async def start_essay(
     payload: EssayStartRequest,
+    _: None = Depends(require_model_rate_limit),
     claim: Claims = Depends(get_current_user),
 ):
     if claim is None or claim.token is None:
@@ -283,6 +291,7 @@ async def clear_essay(
 @APP.post("/essay/validate_theme", response_model=ValidateThemeResponse)
 async def validate_theme(
     payload: ValidateThemeRequest,
+    _: None = Depends(require_model_rate_limit),
     claim: Claims = Depends(get_current_user),
 ):
     """Проверка темы сочинения: осмысленная формулировка (ИИ)."""
@@ -367,6 +376,7 @@ async def _evaluate_essay_task(essay_id: int) -> None:
 async def end_essay(
     payload: EssayEndRequest,
     background_tasks: BackgroundTasks,
+    _: None = Depends(require_model_rate_limit),
     claim: Claims = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
