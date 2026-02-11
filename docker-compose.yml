@@ -1,5 +1,5 @@
 services:
-  pg:
+  pg-lingwo:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -60,7 +60,7 @@ services:
       context: ./api
     restart: unless-stopped
     depends_on:
-      pg:
+      pg-lingwo:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -117,7 +117,7 @@ services:
     build:
       context: ./auth
     depends_on:
-      pg:
+      pg-lingwo:
         condition: service_healthy
       redis:
         condition: service_healthy
