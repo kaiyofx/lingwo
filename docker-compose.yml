@@ -51,12 +51,16 @@ services:
       DATABASE_URL: postgresql+asyncpg://${PG_USER:-postgres}:${PG_PASSWORD:-1234}@pg:5432/${PG_NAME:-lingwo}
       LLAMA_MODEL_PATH: /host_data/models
     volumes:
-      # all_themes.txt из проекта
       - ./chroma/all_themes.txt:/app/chroma/all_themes.txt
-      # папка уровнем выше: оттуда берётся папка models
       - ..:/host_data
-    ports:
-      - "8001:8001"
+    networks:
+      - prod-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.lingwo.ru`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=le"
+      - "traefik.http.services.api.loadbalancer.server.port=8001"
 
   frontend:
     build:
@@ -65,8 +69,14 @@ services:
     depends_on:
       chroma-init:
         condition: service_completed_successfully
-    ports:
-      - "3000:3000"
+    networks:
+      - prod-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`lingwo.ru`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=le"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
 
   auth:
     image: lingwo_auth
@@ -108,8 +118,11 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    ports:
-      - 8000:8000
 
 volumes:
   pgdata:
+
+networks:
+  prod-network:
+    external: true
+    name: prod-network
