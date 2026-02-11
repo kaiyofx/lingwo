@@ -17,7 +17,7 @@ services:
       retries: 5
       start_period: 5s
 
-  redis:
+  redis-lingwo:
     image: redis:7-alpine
     restart: unless-stopped
     command: redis-server --requirepass ${REDIS_PASSWORD}
@@ -30,23 +30,23 @@ services:
     networks:
       - prod-network
 
-  chroma:
+  chroma-lingwo:
     image: chromadb/chroma:0.6.3
     restart: unless-stopped
     networks:
       - prod-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      test: ["CMD", "curl", "-f", "http://chroma-lingwo:8000/api/v1/heartbeat"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
 
-  chroma-init:
+  chroma-init-lingwo:
     build:
       context: ./chroma
     depends_on:
-      chroma:
+      chroma-lingwo:
         condition: service_healthy
     restart: "no"
     networks:
@@ -55,21 +55,21 @@ services:
       CHROMA_SERVER_HOST: chroma
       CHROMA_SERVER_HTTP_PORT: 8000
 
-  api:
+  api-lingwo:
     build:
       context: ./api
     restart: unless-stopped
     depends_on:
       pg-lingwo:
         condition: service_healthy
-      redis:
+      redis-lingwo:
         condition: service_healthy
-      chroma-init:
+      chroma-init-lingwo:
         condition: service_completed_successfully
     environment:
-      DATABASE_URL: postgresql+asyncpg://${PG_USER:-postgres}:${PG_PASSWORD:-1234}@pg-lingwo:5432/${PG_NAME:-lingwo}
+      DATABASE_URL: postgresql+asyncpg://${PG_USER}:${PG_PASSWORD}@pg-lingwo:5432/${PG_NAME}
       LLAMA_MODEL_PATH: /host_data
-      REDIS_HOST: redis
+      REDIS_HOST: redis-lingwo
       REDIS_PORT: "6379"
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
@@ -79,37 +79,37 @@ services:
       - prod-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`api.lingwo.ru`)"
-      - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls.certresolver=le"
-      - "traefik.http.services.api.loadbalancer.server.port=8001"
+      - "traefik.http.routers.api-lingwo.rule=Host(`api.lingwo.ru`)"
+      - "traefik.http.routers.api-lingwo.entrypoints=websecure"
+      - "traefik.http.routers.api-lingwo.tls.certresolver=le"
+      - "traefik.http.services.api-lingwo.loadbalancer.server.port=8001"
 
-  frontend:
+  frontend-lingwo:
     build:
       context: ./lingwo
     restart: unless-stopped
     depends_on:
-      chroma-init:
+      chroma-init-lingwo:
         condition: service_completed_successfully
     environment:
-      NUXT_AUTH_URL: ${NUXT_AUTH_URL:-http://auth:8000}
+      NUXT_AUTH_URL: ${NUXT_AUTH_URL:-http://auth-lingwo:8000}
       NUXT_PUBLIC_BASE_URL: ${NUXT_PUBLIC_BASE_URL:-https://lingwo.ru}
       NUXT_PUBLIC_BASE_AUTH: ${NUXT_PUBLIC_BASE_AUTH:-https://lingwo.ru/api/auth}
       NUXT_PUBLIC_BASE_API_URL: ${NUXT_PUBLIC_BASE_API_URL:-https://api.lingwo.ru}
       NUXT_PUBLIC_DOMAIN: ${NUXT_PUBLIC_DOMAIN:-lingwo.ru}
       NUXT_PUBLIC_FULL_DOMAIN: ${NUXT_PUBLIC_FULL_DOMAIN:-https://lingwo.ru}
-      NUXT_BACKEND_SERVICE: ${NUXT_BACKEND_SERVICE:-http://api:8001}
+      NUXT_BACKEND_SERVICE: ${NUXT_BACKEND_SERVICE:-http://api-lingwo:8001}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
     networks:
       - prod-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`lingwo.ru`)"
-      - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls.certresolver=le"
-      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.frontend-lingwo.rule=Host(`lingwo.ru`)"
+      - "traefik.http.routers.frontend-lingwo.entrypoints=websecure"
+      - "traefik.http.routers.frontend-lingwo.tls.certresolver=le"
+      - "traefik.http.services.frontend-lingwo.loadbalancer.server.port=3000"
 
-  auth:
+  auth-lingwo:
     image: lingwo_auth
     tty: true
     stdin_open: true
@@ -119,7 +119,7 @@ services:
     depends_on:
       pg-lingwo:
         condition: service_healthy
-      redis:
+      redis-lingwo:
         condition: service_healthy
     networks:
       - prod-network
@@ -128,7 +128,7 @@ services:
       REG_TOKEN_TIMEOUT: 10
       ACCESS_TOKEN_LIFETIME: 720
       REFRESH_TOKEN_LIFETIME: 365
-      PEPPERED_PASSWORDS_SECRET_KEY: "18629634096cf6865346zab7936c8a89e5f6047cd3abdbb2cf8eb1956bc6bc387"
+      PEPPERED_PASSWORDS_SECRET_KEY: "18629634036cf6865346zab7936c8189e5f6047cd3abdbb2cf8eb1956bc6bc387"
       DJANGO_SETTINGS_MODULE: auth_service.settings
       SECRET_KEY: ${AUTHSECRET_KEY}
       EMAIL_HOST: ${EMAIL_HOST}
@@ -138,9 +138,9 @@ services:
       SIGNING_KEY: ${SIGNING_KEY}
       VERIFYING_KEY: ${VERIFYING_KEY}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      REDIS_HOST: redis
+      REDIS_HOST: redis-lingwo
       REDIS_PORT: "6379"
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-lingwo:6379/0
       DB_NAME: ${PG_NAME}
       DB_USER: ${PG_USER}
       DB_PASSWORD: ${PG_PASSWORD}
@@ -148,7 +148,7 @@ services:
       DB_PORT: ${PG_PORT}
       TZ: ${TZ}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://auth:8000/health/"]
+      test: ["CMD", "curl", "-f", "http://auth-lingwo:8000/health/"]
       interval: 10s
       timeout: 5s
       retries: 5
