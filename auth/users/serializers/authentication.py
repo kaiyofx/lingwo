@@ -119,7 +119,7 @@ class OTPTokenObtainSerializer(TokenObtainPairSerializer):
         """
         token = super().get_token(user)
         silq_user = cast(ABSUser, user)
-        token["role"] = silq_user.role.pk
+        token["role"] = silq_user.role_id
         token["email"] = silq_user.email
         token['username'] = silq_user.username
         return token

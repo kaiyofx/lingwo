@@ -8,6 +8,7 @@ class UsersConfig(AppConfig):
         try:
             from .utils import create_initial_roles
             post_migrate.connect(create_initial_roles, sender=self)
+            create_initial_roles(self, interactive=False)
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)

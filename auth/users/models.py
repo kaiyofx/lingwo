@@ -73,7 +73,7 @@ class ABSUser(AbstractUser):
     REQUIRED_FIELDS = []
 
     def is_admin_user(self):
-        return self.role.pk == UserRoles.ADMIN
+        return self.role_id == UserRoles.ADMIN
 
     def soft_delete(self):
         """Отмечает пользователя как удаленного и фиксирует время."""

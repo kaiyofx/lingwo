@@ -32,9 +32,7 @@ def find_user(
 
 
 def create_initial_roles(sender, **kwargs):
-    if not kwargs.get("interactive", True):
-        return
-
+    """Create Admin and Client roles so users.role_id always resolves. Runs after migrate (including non-interactive in Docker)."""
     from .models import Role, UserRoles
 
     roles_data = {
