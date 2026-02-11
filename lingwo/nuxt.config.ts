@@ -52,7 +52,6 @@ export default defineNuxtConfig({
   runtimeConfig: {
     authUrl: process.env.NUXT_AUTH_URL,
     backendService: process.env.NUXT_BACKEND_SERVICE,
-    smarcaptchaSecret: process.env.NUXT_SMARTCAPTCHA_SECRET,
     baseURL: process.env.NUXT_PUBLIC_BASE_URL,
     public: {
       baseURL: process.env.NUXT_PUBLIC_BASE_URL,
