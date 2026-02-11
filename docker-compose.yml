@@ -37,6 +37,9 @@ services:
     environment:
       CHROMA_SERVER_HOST: chroma
       CHROMA_SERVER_HTTP_PORT: 8000
+      THEMES_FILE: /host_data/all_themes.txt
+    volumes:
+      - ..:/host_data
 
   api:
     build:
@@ -49,6 +52,11 @@ services:
         condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql+asyncpg://${PG_USER:-postgres}:${PG_PASSWORD:-1234}@pg:5432/${PG_NAME:-lingwo}
+      THEMES_PATH: /host_data/all_themes.txt
+      LLAMA_MODEL_PATH: /host_data/models
+    volumes:
+      # папка уровнем выше docker-compose.yml: оттуда берутся all_themes.txt и models
+      - ..:/host_data
     ports:
       - "8001:8001"
 

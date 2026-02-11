@@ -80,7 +80,7 @@
 
 **Redis** (auth, api): `REDIS_URL`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
 
-**API**: `DATABASE_URL` в compose собирается из PG_*; при необходимости — `CHROMA_HOST`, `CHROMA_PORT`, `LLAMA_MODEL_PATH`, `THEMES_PATH`
+**API**: `DATABASE_URL` в compose собирается из PG_*; при необходимости — `CHROMA_HOST`, `CHROMA_PORT`, `LLAMA_MODEL_PATH`, `THEMES_PATH`. При запуске через Docker в контейнер монтируется папка уровнем выше каталога с `docker-compose.yml`: оттуда берутся `all_themes.txt` и папка `models` (модель .gguf). Положите эти файлы в родительскую папку репозитория (или укажите свои пути через переменные окружения).
 
 **Auth**: `AUTHSECRET_KEY`, `SIGNING_KEY`, `VERIFYING_KEY`, `AUTH_SECRET`, переменные для почты (`EMAIL_HOST`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` и т.д.) — см. `.env.example` или существующий `.env`
 

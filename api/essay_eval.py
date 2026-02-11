@@ -82,7 +82,16 @@ PROMPT_VALIDATE_THEME = """Проверь, является ли следующ�
 def _model_path() -> Path:
     path = os.getenv("LLAMA_MODEL_PATH")
     if path:
-        return Path(path)
+        p = Path(path)
+        if p.is_dir():
+            default = p / "gemma-3-4b-it-UD-Q4_K_XL.gguf"
+            if default.exists():
+                return default
+            ggufs = list(p.glob("*.gguf"))
+            if ggufs:
+                return ggufs[0]
+            return default
+        return p
     repo = Path(__file__).resolve().parents[1]
     return repo / "gemma-3-4b-it-UD-Q4_K_XL.gguf"
 
