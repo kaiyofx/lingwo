@@ -67,11 +67,8 @@ services:
       chroma-init-lingwo:
         condition: service_completed_successfully
     environment:
-      DB_HOST: pg-lingwo
-      PG_USER: ${PG_USER}
-      PG_PASSWORD: ${PG_PASSWORD}
-      PG_NAME: ${PG_NAME}
-      PG_PORT: "5432"
+      # Хост pg-lingwo — литерал, имя сервиса PostgreSQL в этом compose (не из .env)
+      DATABASE_URL: "postgresql+asyncpg://${PG_USER}:${PG_PASSWORD_ENCODE}@pg-lingwo:5432/${PG_NAME}"
       LLAMA_MODEL_PATH: /host_data
       REDIS_HOST: redis-lingwo
       REDIS_PORT: "6379"
