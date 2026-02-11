@@ -87,6 +87,16 @@ services:
     depends_on:
       chroma-init:
         condition: service_completed_successfully
+    environment:
+      NUXT_AUTH_URL: ${NUXT_AUTH_URL:-http://auth:8000}
+      NUXT_PUBLIC_BASE_URL: ${NUXT_PUBLIC_BASE_URL:-https://lingwo.ru}
+      NUXT_PUBLIC_BASE_AUTH: ${NUXT_PUBLIC_BASE_AUTH:-https://lingwo.ru/api/auth}
+      NUXT_PUBLIC_BASE_API_URL: ${NUXT_PUBLIC_BASE_API_URL:-https://api.lingwo.ru}
+      NUXT_PUBLIC_DOMAIN: ${NUXT_PUBLIC_DOMAIN:-lingwo.ru}
+      NUXT_PUBLIC_FULL_DOMAIN: ${NUXT_PUBLIC_FULL_DOMAIN:-https://lingwo.ru}
+      NUXT_BACKEND_SERVICE: ${NUXT_BACKEND_SERVICE:-http://api:8001}
+      NUXT_SMARTCAPTCHA_SECRET: ${NUXT_SMARTCAPTCHA_SECRET:-}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
     networks:
       - prod-network
     labels:
