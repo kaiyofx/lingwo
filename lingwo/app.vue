@@ -18,23 +18,40 @@ const pagesWithoutSidebar = ['/login', '/register', '/confirmation']
 const showSidebar = computed(() => {
   return status.value === 'authenticated' && !pagesWithoutSidebar.includes(route.path)
 })
+
+onMounted(() => {
+  ;(function (m: any, e: Document, t: string, r: string, i: string, k?: HTMLScriptElement, a?: HTMLScriptElement) {
+    m[i] = m[i] || function () {
+      (m[i].a = m[i].a || []).push(arguments)
+    }
+    m[i].l = Number(new Date())
+    for (let j = 0; j < document.scripts.length; j++) {
+      if ((document.scripts[j] as HTMLScriptElement).src === r) {
+        return
+      }
+    }
+    k = e.createElement(t) as HTMLScriptElement
+    a = e.getElementsByTagName(t)[0] as HTMLScriptElement
+    k.async = true
+    k.src = r
+    a.parentNode?.insertBefore(k, a)
+  })(window as any, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=106818892', 'ym')
+
+  ;(window as any).ym(106818892, 'init', {
+    ssr: true,
+    webvisor: true,
+    clickmap: true,
+    ecommerce: 'dataLayer',
+    referrer: document.referrer,
+    url: location.href,
+    accurateTrackBounce: true,
+    trackLinks: true
+  })
+})
+
 </script>
 
 <template>
-
-<!-- Yandex.Metrika counter -->
-<script type="text/javascript">
-    (function(m,e,t,r,i,k,a){
-        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();
-        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=106818892', 'ym');
-
-    ym(106818892, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
-</script>
-<noscript><div><img src="https://mc.yandex.ru/watch/106818892" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-<!-- /Yandex.Metrika counter -->
   
   <div class="min-h-screen flex flex-col">
     <NuxtRouteAnnouncer />
