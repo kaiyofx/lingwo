@@ -118,6 +118,19 @@ def _get_model():
         )
     return _llama_model
 
+GEMMA_USER_PREFIX = "<start_of_turn>user\n"
+GEMMA_USER_SUFFIX = "<end_of_turn>\n<start_of_turn>model\n"
+
+GEMMA_TOP_K = 64
+GEMMA_TOP_P = 0.95
+GEMMA_REPEAT_PENALTY = 1.0
+GEMMA_MIN_P = 0.01
+
+
+def _gemma_prompt(prompt: str) -> str:
+    """Оборачивает промпт в формат Gemma (user turn + начало ответа model)."""
+    return GEMMA_USER_PREFIX + prompt + GEMMA_USER_SUFFIX
+
 
 def _extract_json(text: str) -> dict[str, Any]:
     """Достаёт первый полный JSON-объект из ответа модели (игнорирует текст после него — «Extra data»)."""
@@ -249,12 +262,17 @@ def validate_theme_sync(theme: str) -> dict[str, Any]:
     model = _get_model()
     prompt = PROMPT_VALIDATE_THEME.format(theme=theme_stripped)
 
+    prompt_with_format = _gemma_prompt(prompt)
     for attempt in range(2):
         out = model(
-            prompt,
+            prompt_with_format,
             max_tokens=256,
             temperature=0,
-            stop=["</s>"],
+            top_k=GEMMA_TOP_K,
+            top_p=GEMMA_TOP_P,
+            repeat_penalty=GEMMA_REPEAT_PENALTY,
+            min_p=GEMMA_MIN_P,
+            stop=["</s>", "<end_of_turn>"],
         )
         response_text = _get_response_text(out)
         if response_text:
@@ -304,11 +322,16 @@ def evaluate_essay_sync(theme: str, text: str, essay_type: str = "essay") -> dic
     model = _get_model()
     text_truncated = text[:8000]
     prompt = prompt_tpl.format(theme=theme, text=text_truncated)
+    prompt_with_format = _gemma_prompt(prompt)
     out = model(
-        prompt,
+        prompt_with_format,
         max_tokens=1536,
         temperature=0.3,
-        stop=["</s>", "\n\n\n"],
+        top_k=GEMMA_TOP_K,
+        top_p=GEMMA_TOP_P,
+        repeat_penalty=GEMMA_REPEAT_PENALTY,
+        min_p=GEMMA_MIN_P,
+        stop=["</s>", "<end_of_turn>", "\n\n\n"],
     )
     response_text = _get_response_text(out)
     if not response_text:
