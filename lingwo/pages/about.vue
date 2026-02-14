@@ -89,7 +89,7 @@ useHead({
               Юридическая информация
             </CardTitle>
             <CardDescription class="text-gray-600">
-              © 2025 Лингво. Все права защищены.
+              © {{ new Date().getFullYear() }} Лингво. Все права защищены.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -29,6 +29,8 @@ k5 — Грамотность. «Незачет» если на 100 слов в 
 
 Выяви типы ошибок по категориям: punctuation, spelling, grammar, style.
 
+Используй только для входа только текст сочинения, никаких других данных. Сам ничего не добавляй.
+
 Ответь ТОЛЬКО валидным JSON без markdown. У каждого критерия score — только 0 или 1:
 {{"criteries": {{"k1": {{"score": 0 или 1, "comment": "...", "found_in_text": []}}, "k2": {{"score": 0 или 1, "comment": "...", "suggestions": []}}, "k3": {{...}}, "k4": {{...}}, "k5": {{...}}}}, "common_mistakes": [{{"type": "punctuation", "count": N}}, {{"type": "spelling", "count": N}}]}}
 
@@ -59,6 +61,8 @@ PROMPT_EGE = """Ты — эксперт по проверке сочинений
 
 Выяви типы ошибок: punctuation, spelling, grammar, style.
 
+Используй только для входа только текст сочинения, никаких других данных. Сам ничего не добавляй.
+
 Ответь ТОЛЬКО валидным JSON без markdown, в формате:
 {{"criteries": {{"k1": {{"score": N, "comment": "..."}}, "k2": {{"score": N, "comment": "..."}}, ... "k10": {{"score": N, "comment": "..."}}}}, "common_mistakes": [{{"type": "punctuation", "count": 2}}]}}
 
@@ -71,7 +75,7 @@ PROMPT_EGE = """Ты — эксперт по проверке сочинений
 ESSAY_MAX_SCORE = 5.0  # 5 критериев, по каждому 0 или 1 (зачет/незачет)
 
 # Проверка темы сочинения: осмысленная формулировка (итоговое сочинение или ЕГЭ)
-PROMPT_VALIDATE_THEME = """Проверь, является ли следующая строка осмысленной темой сочинения (итоговое сочинение или ЕГЭ по литературе/русскому).
+PROMPT_VALIDATE_THEME = """Проверь, является ли следующая строка осмысленной темой сочинения (итоговое сочинение или ЕГЭ по русскому языку).
 Тема должна быть формулировкой проблемы или вопроса, по которому можно написать сочинение. Не допускаются: бессмысленный текст, случайный набор слов, оскорбления, реклама.
 Ответь ТОЛЬКО валидным JSON без markdown: {{"valid": true или false, "message": "краткая причина, если valid false"}}
 
@@ -124,7 +128,7 @@ def _extract_json(text: str) -> dict[str, Any]:
     first = text.find("{")
     if first == -1:
         raise json.JSONDecodeError("No JSON object found", text, 0)
-    # Ищем парную закрывающую скобку для первой { (внутри строк в кавычках скобки не считаем)
+
     depth = 0
     in_string = False
     escape = False
@@ -148,11 +152,29 @@ def _extract_json(text: str) -> dict[str, Any]:
             depth -= 1
             if depth == 0:
                 return json.loads(text[first : i + 1])
-    # Парная скобка не найдена — берём от первой { до последней }
+
     last = text.rfind("}")
     if last != -1 and last > first:
         text = text[first : last + 1]
     return json.loads(text)
+
+
+def _get_response_text(out: dict[str, Any]) -> str:
+    """Достаёт текст ответа из ответа модели (llama-cpp: text или message.content)."""
+    choices = out.get("choices") or []
+    if not choices:
+        return ""
+    first = choices[0]
+    if isinstance(first, dict):
+        text = first.get("text") or first.get("content")
+        if text is not None:
+            return (text if isinstance(text, str) else str(text)).strip()
+        msg = first.get("message")
+        if isinstance(msg, dict):
+            content = msg.get("content")
+            if content is not None:
+                return (content if isinstance(content, str) else str(content)).strip()
+    return ""
 
 
 def _normalize_result_essay(raw: dict[str, Any]) -> dict[str, Any]:
@@ -220,23 +242,43 @@ def _normalize_result_ege(raw: dict[str, Any]) -> dict[str, Any]:
 
 def validate_theme_sync(theme: str) -> dict[str, Any]:
     """Проверка темы сочинения моделью: осмысленная формулировка или нет. Возвращает {"valid": bool, "message": str}."""
+    theme_stripped = theme.strip()[:512]
+    if len(theme_stripped) < 2:
+        return {"valid": False, "message": "Тема слишком короткая. Напишите формулировку темы сочинения."}
+
     model = _get_model()
-    prompt = PROMPT_VALIDATE_THEME.format(theme=theme.strip()[:512])
-    out = model(
-        prompt,
-        max_tokens=128,
-        temperature=0,  # детерминированность: одна и та же тема — один и тот же результат
-        stop=["</s>", "\n\n"],
-    )
-    response_text = (out.get("choices") or [{}])[0].get("text", "").strip()
-    if not response_text:
+    prompt = PROMPT_VALIDATE_THEME.format(theme=theme_stripped)
+
+    for attempt in range(2):
+        out = model(
+            prompt,
+            max_tokens=256,
+            temperature=0,
+            stop=["</s>"],
+        )
+        response_text = _get_response_text(out)
+        if response_text:
+            break
+        logger.warning(
+            "validate_theme_sync: пустой ответ модели (попытка %s), тема=%r",
+            attempt + 1,
+            theme_stripped[:100],
+        )
+    else:
         return {"valid": False, "message": "Не удалось проверить тему. Попробуйте ещё раз."}
+
     try:
         raw = _extract_json(response_text)
         valid = bool(raw.get("valid", False))
         message = str(raw.get("message", "")) or ""
         return {"valid": valid, "message": message or ("Тема не прошла проверку." if not valid else "")}
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        logger.warning(
+            "validate_theme_sync: не удалось распарсить JSON, тема=%r, ответ=%r, err=%s",
+            theme_stripped[:80],
+            response_text[:300],
+            e,
+        )
         return {"valid": False, "message": "Не удалось проверить тему. Попробуйте ещё раз."}
 
 
@@ -268,7 +310,7 @@ def evaluate_essay_sync(theme: str, text: str, essay_type: str = "essay") -> dic
         temperature=0.3,
         stop=["</s>", "\n\n\n"],
     )
-    response_text = (out.get("choices") or [{}])[0].get("text", "")
+    response_text = _get_response_text(out)
     if not response_text:
         logger.warning("essay_eval: модель вернула пустой ответ")
         return {
