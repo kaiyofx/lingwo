@@ -182,7 +182,7 @@ const saveSettings = async () => {
         </Card>
 
         <!-- Экспорт статистики -->
-        <Card class="border-green-100/50 bg-white shadow-lg">
+        <!-- <Card class="border-green-100/50 bg-white shadow-lg">
           <CardHeader>
             <CardTitle class="flex items-center gap-2 text-gray-800">
               <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
@@ -205,7 +205,7 @@ const saveSettings = async () => {
               Экспортировать статистику (CSV)
             </Button>
           </CardContent>
-        </Card>
+        </Card> -->
 
         <!-- Кнопка сохранения -->
         <div class="flex justify-end gap-4 pt-4">
