@@ -12,6 +12,12 @@ interface CriterionItem {
   suggestions?: string[]
 }
 
+interface MistakeRange {
+  type: 'punctuation' | 'spelling' | 'grammar' | 'style'
+  count: number
+  ranges: Array<[number, number]>
+}
+
 interface EssayDetail {
   id: number
   type: string
@@ -23,7 +29,7 @@ interface EssayDetail {
   total_score_per: number | null
   max_score: number | null
   criteries?: Record<string, CriterionItem>
-  common_mistakes?: string[]
+  common_mistakes?: Array<MistakeRange | string>
 }
 
 definePageMeta({
@@ -88,6 +94,125 @@ function scoreLabel(e: EssayDetail) {
 const typeLabel = computed(() => {
   if (!essay.value) return ''
   return essay.value.type === 'ege' ? 'Сочинение ЕГЭ' : 'Итоговое сочинение'
+})
+
+// Функция для получения типа ошибки по русски
+function getMistakeTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    punctuation: 'Пунктуационная ошибка',
+    spelling: 'Орфографическая ошибка',
+    grammar: 'Грамматическая ошибка',
+    style: 'Речевая ошибка',
+  }
+  return labels[type] || type
+}
+
+// Функция для получения цвета выделения по типу ошибки
+function getMistakeColor(type: string): string {
+  const colors: Record<string, string> = {
+    punctuation: 'bg-yellow-100 border-yellow-300 hover:bg-yellow-200',
+    spelling: 'bg-red-100 border-red-300 hover:bg-red-200',
+    grammar: 'bg-orange-100 border-orange-300 hover:bg-orange-200',
+    style: 'bg-blue-100 border-blue-300 hover:bg-blue-200',
+  }
+  return colors[type] || 'bg-gray-100 border-gray-300'
+}
+
+// Функция для рендеринга текста с выделенными ошибками
+function renderTextWithMistakes(text: string, mistakes: EssayDetail['common_mistakes']): Array<{ text: string; mistake?: MistakeRange; start: number; end: number }> {
+  if (!text) return []
+  
+  if (!mistakes || mistakes.length === 0) {
+    return [{ text, start: 0, end: text.length }]
+  }
+
+  // Собираем все диапазоны ошибок с их типами
+  const errorRanges: Array<{ start: number; end: number; mistake: MistakeRange }> = []
+  
+  for (const mistake of mistakes) {
+    // Пропускаем старый формат (строки)
+    if (typeof mistake === 'string') continue
+    
+    // Проверяем, что это объект с ranges
+    const mistakeObj = mistake as MistakeRange
+    if (mistakeObj && typeof mistakeObj === 'object' && Array.isArray(mistakeObj.ranges)) {
+      for (const range of mistakeObj.ranges) {
+        if (Array.isArray(range) && range.length === 2) {
+          const [start, end] = range
+          if (typeof start === 'number' && typeof end === 'number' && 
+              start >= 0 && end > start && end <= text.length) {
+            errorRanges.push({ start, end, mistake: mistakeObj })
+          }
+        }
+      }
+    }
+  }
+
+  // Если нет валидных диапазонов, возвращаем весь текст
+  if (errorRanges.length === 0) {
+    return [{ text, start: 0, end: text.length }]
+  }
+
+  // Сортируем по начальной позиции
+  errorRanges.sort((a, b) => a.start - b.start)
+
+  // Объединяем перекрывающиеся диапазоны (берем первый тип ошибки)
+  const mergedRanges: Array<{ start: number; end: number; mistake: MistakeRange }> = []
+  for (const errorRange of errorRanges) {
+    if (mergedRanges.length === 0) {
+      mergedRanges.push(errorRange)
+    } else {
+      const last = mergedRanges[mergedRanges.length - 1]
+      if (errorRange.start <= last.end) {
+        // Перекрываются - расширяем последний диапазон
+        last.end = Math.max(last.end, errorRange.end)
+      } else {
+        // Не перекрываются - добавляем новый
+        mergedRanges.push(errorRange)
+      }
+    }
+  }
+
+  // Разбиваем текст на фрагменты
+  const fragments: Array<{ text: string; mistake?: MistakeRange; start: number; end: number }> = []
+  let currentPos = 0
+
+  for (const errorRange of mergedRanges) {
+    // Добавляем текст до ошибки
+    if (errorRange.start > currentPos) {
+      fragments.push({
+        text: text.slice(currentPos, errorRange.start),
+        start: currentPos,
+        end: errorRange.start,
+      })
+    }
+
+    // Добавляем текст с ошибкой
+    fragments.push({
+      text: text.slice(errorRange.start, errorRange.end),
+      mistake: errorRange.mistake,
+      start: errorRange.start,
+      end: errorRange.end,
+    })
+
+    currentPos = errorRange.end
+  }
+
+  // Добавляем оставшийся текст
+  if (currentPos < text.length) {
+    fragments.push({
+      text: text.slice(currentPos),
+      start: currentPos,
+      end: text.length,
+    })
+  }
+
+  return fragments.length > 0 ? fragments : [{ text, start: 0, end: text.length }]
+}
+
+const textFragments = computed(() => {
+  if (!essay.value) return []
+  return renderTextWithMistakes(essay.value.text, essay.value.common_mistakes)
 })
 
 useHead({
@@ -180,7 +305,14 @@ useHead({
             </CardHeader>
             <CardContent>
               <div class="rounded-lg border border-gray-200 bg-gray-50/50 p-4 text-gray-800 whitespace-pre-wrap leading-relaxed min-h-32">
-                {{ essay.text }}
+                <span
+                  v-for="(fragment, idx) in textFragments"
+                  :key="idx"
+                  :class="fragment.mistake ? `relative inline-block px-1 mx-0.5 rounded border-b-2 border-dashed cursor-help transition-colors ${getMistakeColor(fragment.mistake.type)}` : ''"
+                  :title="fragment.mistake ? getMistakeTypeLabel(fragment.mistake.type) : ''"
+                >
+                  {{ fragment.text }}
+                </span>
               </div>
             </CardContent>
           </Card>

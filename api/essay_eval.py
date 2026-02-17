@@ -29,10 +29,12 @@ k5 — Грамотность. «Незачет» если на 100 слов в 
 
 Выяви типы ошибок по категориям: punctuation, spelling, grammar, style.
 
+Для каждой ошибки укажи точные индексы начала и конца фрагмента в тексте (start и end - позиции символов в исходном тексте, начиная с 0). Например, если ошибка в слове "привет" на позициях 10-16, то start=10, end=16.
+
 Используй только для входа только текст сочинения, никаких других данных. Сам ничего не добавляй.
 
 Ответь ТОЛЬКО валидным JSON без markdown. У каждого критерия score — только 0 или 1:
-{{"criteries": {{"k1": {{"score": 0 или 1, "comment": "...", "found_in_text": []}}, "k2": {{"score": 0 или 1, "comment": "...", "suggestions": []}}, "k3": {{...}}, "k4": {{...}}, "k5": {{...}}}}, "common_mistakes": [{{"type": "punctuation", "count": N}}, {{"type": "spelling", "count": N}}]}}
+{{"criteries": {{"k1": {{"score": 0 или 1, "comment": "...", "found_in_text": []}}, "k2": {{"score": 0 или 1, "comment": "...", "suggestions": []}}, "k3": {{"score": 0 или 1, "comment": "..."}}, "k4": {{"score": 0 или 1, "comment": "..."}}, "k5": {{"score": 0 или 1, "comment": "..."}}}}, "common_mistakes": [{{"type": "punctuation", "count": N, "ranges": [[start, end]]}}, {{"type": "spelling", "count": N, "ranges": [[start, end]]}}, {{"type": "grammar", "count": N, "ranges": [[start, end]]}}, {{"type": "style", "count": N, "ranges": [[start, end]]}}]}}
 
 Тема: {theme}
 
@@ -61,10 +63,12 @@ PROMPT_EGE = """Ты — эксперт по проверке сочинений
 
 Выяви типы ошибок: punctuation, spelling, grammar, style.
 
+Для каждой ошибки укажи точные индексы начала и конца фрагмента в тексте (start и end - позиции символов в исходном тексте, начиная с 0). Например, если ошибка в слове "привет" на позициях 10-16, то start=10, end=16.
+
 Используй только для входа только текст сочинения, никаких других данных. Сам ничего не добавляй.
 
 Ответь ТОЛЬКО валидным JSON без markdown, в формате:
-{{"criteries": {{"k1": {{"score": N, "comment": "..."}}, "k2": {{"score": N, "comment": "..."}}, ... "k10": {{"score": N, "comment": "..."}}}}, "common_mistakes": [{{"type": "punctuation", "count": 2}}]}}
+{{"criteries": {{"k1": {{"score": N, "comment": "..."}}, "k2": {{"score": N, "comment": "..."}}, "k3": {{"score": N, "comment": "..."}}, "k4": {{"score": N, "comment": "..."}}, "k5": {{"score": N, "comment": "..."}}, "k6": {{"score": N, "comment": "..."}}, "k7": {{"score": N, "comment": "..."}}, "k8": {{"score": N, "comment": "..."}}, "k9": {{"score": N, "comment": "..."}}, "k10": {{"score": N, "comment": "..."}}}}, "common_mistakes": [{{"type": "punctuation", "count": N, "ranges": [[start, end]]}}, {{"type": "spelling", "count": N, "ranges": [[start, end]]}}, {{"type": "grammar", "count": N, "ranges": [[start, end]]}}, {{"type": "style", "count": N, "ranges": [[start, end]]}}]}}
 
 Тема/проблема: {theme}
 
@@ -88,7 +92,7 @@ def _model_path() -> Path:
     if path:
         p = Path(path)
         if p.is_dir():
-            default = p / "gemma-3-4b-it-UD-Q4_K_XL.gguf"
+            default = p / "gemma-3-4b-it-UD-Q6_K_XL.gguf"
             if default.exists():
                 return default
             ggufs = list(p.glob("*.gguf"))
@@ -97,7 +101,7 @@ def _model_path() -> Path:
             return default
         return p
     repo = Path(__file__).resolve().parents[1]
-    return repo / "gemma-3-4b-it-UD-Q4_K_XL.gguf"
+    return repo / "gemma-3-4b-it-UD-Q6_K_XL.gguf"
 
 
 def _get_model():
@@ -215,7 +219,25 @@ def _normalize_result_essay(raw: dict[str, Any]) -> dict[str, Any]:
     normalized_mistakes = []
     for m in mistakes:
         if isinstance(m, dict) and "type" in m and "count" in m:
-            normalized_mistakes.append({"type": str(m["type"]), "count": int(m["count"])})
+            mistake_type = str(m["type"])
+            count = int(m["count"])
+            # Обрабатываем ranges - массив [start, end] индексов
+            ranges = m.get("ranges", [])
+            if isinstance(ranges, list):
+                # Валидируем ranges: должны быть массивы из двух чисел [start, end]
+                valid_ranges = []
+                for r in ranges:
+                    if isinstance(r, list) and len(r) == 2:
+                        start, end = r[0], r[1]
+                        if isinstance(start, (int, float)) and isinstance(end, (int, float)):
+                            valid_ranges.append([int(start), int(end)])
+                normalized_mistakes.append({
+                    "type": mistake_type,
+                    "count": count,
+                    "ranges": valid_ranges
+                })
+            else:
+                normalized_mistakes.append({"type": mistake_type, "count": count, "ranges": []})
     allowed = {"punctuation", "spelling", "grammar", "style"}
     common_mistakes = [x for x in normalized_mistakes if x["type"] in allowed]
     return {"criteries": result_criteries, "common_mistakes": common_mistakes}
@@ -247,7 +269,25 @@ def _normalize_result_ege(raw: dict[str, Any]) -> dict[str, Any]:
     normalized_mistakes = []
     for m in mistakes:
         if isinstance(m, dict) and "type" in m and "count" in m:
-            normalized_mistakes.append({"type": str(m["type"]), "count": int(m["count"])})
+            mistake_type = str(m["type"])
+            count = int(m["count"])
+            # Обрабатываем ranges - массив [start, end] индексов
+            ranges = m.get("ranges", [])
+            if isinstance(ranges, list):
+                # Валидируем ranges: должны быть массивы из двух чисел [start, end]
+                valid_ranges = []
+                for r in ranges:
+                    if isinstance(r, list) and len(r) == 2:
+                        start, end = r[0], r[1]
+                        if isinstance(start, (int, float)) and isinstance(end, (int, float)):
+                            valid_ranges.append([int(start), int(end)])
+                normalized_mistakes.append({
+                    "type": mistake_type,
+                    "count": count,
+                    "ranges": valid_ranges
+                })
+            else:
+                normalized_mistakes.append({"type": mistake_type, "count": count, "ranges": []})
     allowed = {"punctuation", "spelling", "grammar", "style"}
     common_mistakes = [x for x in normalized_mistakes if x["type"] in allowed]
     return {"criteries": result_criteries, "common_mistakes": common_mistakes}
@@ -321,7 +361,9 @@ def evaluate_essay_sync(theme: str, text: str, essay_type: str = "essay") -> dic
 
     model = _get_model()
     text_truncated = text[:8000]
-    prompt = prompt_tpl.format(theme=theme, text=text_truncated)
+    # Экранируем фигурные скобки в тексте пользователя, чтобы они не конфликтовали с .format()
+    text_escaped = text_truncated.replace("{", "{{").replace("}", "}}")
+    prompt = prompt_tpl.format(theme=theme, text=text_escaped)
     prompt_with_format = _gemma_prompt(prompt)
     out = model(
         prompt_with_format,
