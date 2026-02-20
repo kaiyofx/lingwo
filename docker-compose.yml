@@ -95,7 +95,7 @@ services:
       - prod-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api-lingwo.rule=Host(`api.lingwo.ru`)"
+      - "traefik.http.routers.api-lingwo.rule=Host(`api.lingwoai.ru`)"
       - "traefik.http.routers.api-lingwo.entrypoints=websecure"
       - "traefik.http.routers.api-lingwo.tls.certresolver=le"
       - "traefik.http.routers.api-lingwo.middlewares=geo-ru@docker"
@@ -110,18 +110,18 @@ services:
         condition: service_completed_successfully
     environment:
       NUXT_AUTH_URL: ${NUXT_AUTH_URL:-http://auth-lingwo:8000}
-      NUXT_PUBLIC_BASE_URL: ${NUXT_PUBLIC_BASE_URL:-https://lingwo.ru}
-      NUXT_PUBLIC_BASE_AUTH: ${NUXT_PUBLIC_BASE_AUTH:-https://lingwo.ru/api/auth}
-      NUXT_PUBLIC_BASE_API_URL: ${NUXT_PUBLIC_BASE_API_URL:-https://api.lingwo.ru}
-      NUXT_PUBLIC_DOMAIN: ${NUXT_PUBLIC_DOMAIN:-lingwo.ru}
-      NUXT_PUBLIC_FULL_DOMAIN: ${NUXT_PUBLIC_FULL_DOMAIN:-https://lingwo.ru}
+      NUXT_PUBLIC_BASE_URL: ${NUXT_PUBLIC_BASE_URL:-https://lingwoai.ru}
+      NUXT_PUBLIC_BASE_AUTH: ${NUXT_PUBLIC_BASE_AUTH:-https://lingwoai.ru/api/auth}
+      NUXT_PUBLIC_BASE_API_URL: ${NUXT_PUBLIC_BASE_API_URL:-https://api.lingwoai.ru}
+      NUXT_PUBLIC_DOMAIN: ${NUXT_PUBLIC_DOMAIN:-lingwoai.ru}
+      NUXT_PUBLIC_FULL_DOMAIN: ${NUXT_PUBLIC_FULL_DOMAIN:-https://lingwoai.ru}
       NUXT_BACKEND_SERVICE: ${NUXT_BACKEND_SERVICE:-http://api-lingwo:8001}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
     networks:
       - prod-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend-lingwo.rule=Host(`lingwo.ru`)"
+      - "traefik.http.routers.frontend-lingwo.rule=Host(`lingwoai.ru`)"
       - "traefik.http.routers.frontend-lingwo.entrypoints=websecure"
       - "traefik.http.routers.frontend-lingwo.tls.certresolver=le"
       - "traefik.http.routers.frontend-lingwo.middlewares=geo-ru@docker"
