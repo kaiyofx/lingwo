@@ -1,10 +1,12 @@
 import asyncio
+import hashlib
+import json
 import logging
 import os
 import random
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 if __name__ == "__main__" and __package__ is None:
     import sys
@@ -36,6 +38,7 @@ from api.schemas import (
     EssayStartRequest,
     EssayState,
     RandomTopicResponse,
+    RecommendedTopicResponse,
     UserSettingsResponse,
     UserSettingsUpdate,
     ValidateThemeRequest,
@@ -128,6 +131,74 @@ def _load_all_themes() -> List[str]:
 
     _cached_themes = themes
     return themes
+
+
+_cached_classified_themes: Optional[Dict[str, List[str]]] = None
+
+CLASSIFIED_THEMES_PATH = os.getenv("CLASSIFIED_THEMES_PATH")
+
+
+def _load_classified_themes() -> Dict[str, List[str]]:
+    global _cached_classified_themes
+    if _cached_classified_themes is not None:
+        return _cached_classified_themes
+
+    if CLASSIFIED_THEMES_PATH:
+        path = Path(CLASSIFIED_THEMES_PATH)
+    else:
+        path = Path(__file__).resolve().parents[1] / "classified_themes.json"
+
+    if not path.exists():
+        raise FileNotFoundError(f"classified_themes.json не найден: {path}")
+
+    with path.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    for key in ("low", "middle", "high"):
+        if key not in data or not data[key]:
+            raise ValueError(f"classified_themes.json: пустой или отсутствует ключ '{key}'")
+
+    _cached_classified_themes = data
+    return data
+
+
+_LEVEL_ORDER = ["low", "middle", "high"]
+
+
+def _determine_recommendation_level(
+    current_avg_pct: Optional[float],
+    target_percent: int,
+) -> str:
+    """Определяет уровень сложности темы на основе текущего среднего % и целевого %."""
+
+    def _pct_to_level(pct: float) -> int:
+        if pct < 40:
+            return 0  # low
+        if pct < 70:
+            return 1  # middle
+        return 2  # high
+
+    if current_avg_pct is None:
+        target_lvl = _pct_to_level(target_percent)
+        return _LEVEL_ORDER[min(target_lvl, 1)]
+
+    current_lvl = _pct_to_level(current_avg_pct)
+    target_lvl = _pct_to_level(target_percent)
+
+    final_lvl = max(current_lvl, target_lvl)
+
+    if target_lvl > current_lvl + 1:
+        final_lvl = current_lvl + 1
+
+    return _LEVEL_ORDER[final_lvl]
+
+
+def _pick_daily_theme(themes: List[str], user_id: str, today: date) -> str:
+    """Детерминированный выбор темы на основе даты и user_id."""
+    seed_str = f"{user_id}:{today.isoformat()}"
+    seed_int = int(hashlib.sha256(seed_str.encode()).hexdigest(), 16)
+    rng = random.Random(seed_int)
+    return rng.choice(themes)
 
 
 def _get_chroma_collection():
@@ -231,6 +302,53 @@ async def random_topic(
         theme = random.choice(_load_all_themes())
 
     return RandomTopicResponse(theme=theme)
+
+
+@APP.get("/recommended_topic", response_model=RecommendedTopicResponse)
+async def recommended_topic(
+    claim: Claims = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    if claim is None or claim.token is None:
+        raise HTTPException(status_code=401, headers={"WWW-Authenticate": "Bearer"})
+
+    result = await session.execute(
+        select(Essay)
+        .where(Essay.user_id == claim.user_id, Essay.total_score_per.isnot(None))
+        .order_by(Essay.ended_at.desc())
+        .limit(10)
+    )
+    recent = result.scalars().all()
+
+    current_avg_pct: Optional[float] = None
+    if recent:
+        weights = list(range(len(recent), 0, -1))
+        total_w = sum(weights)
+        weighted_sum = sum(
+            (e.total_score_per or 0) * w for e, w in zip(recent, weights)
+        )
+        current_avg_pct = round((weighted_sum / total_w) * 100, 1)
+
+    settings_row = await session.execute(
+        select(UserSettings).where(UserSettings.user_id == claim.user_id)
+    )
+    user_settings = settings_row.scalar_one_or_none()
+    target_percent = user_settings.target_percent if user_settings else 70
+
+    level = _determine_recommendation_level(current_avg_pct, target_percent)
+
+    classified = _load_classified_themes()
+    pool = classified.get(level, classified["middle"])
+
+    today = date.today()
+    theme = _pick_daily_theme(pool, claim.user_id, today)
+
+    return RecommendedTopicResponse(
+        theme=theme,
+        level=level,
+        current_percent=current_avg_pct,
+        target_percent=target_percent,
+    )
 
 
 @APP.post("/essay/start", response_model=EssayState)

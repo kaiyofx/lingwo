@@ -11,7 +11,6 @@ import {
   Save,
   Send,
   XCircle,
-  Bell,
 } from 'lucide-vue-next'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
@@ -51,6 +50,13 @@ interface UserSettings {
   auto_save_interval_sec: number
 }
 
+interface RecommendedTopic {
+  theme: string
+  level: string
+  current_percent: number | null
+  target_percent: number
+}
+
 const essayType = ref<'essay' | 'ege'>('essay')
 const themeSource = ref<'recommended' | 'random' | 'own'>('recommended')
 const ownThemeText = ref('')
@@ -58,16 +64,6 @@ const randomSections = ref<string[]>([])
 const randomTheme = ref('')
 const randomLoading = ref(false)
 const themeError = ref('')
-const recommendedNotifyPending = ref(false)
-
-function onRecommendedNotify() {
-  recommendedNotifyPending.value = true
-  setTimeout(() => {
-    toast('Уведомление: рекомендуемая тема обновляется раз в день. Здесь будет оповещение о новых темах.')
-    recommendedNotifyPending.value = false
-  }, 1000)
-}
-
 const { data: activeEssay, isLoading: essayLoading } = useQuery({
   queryKey: computed(() => ['essay-active', session.value?.accessToken ?? '']),
   queryFn: async (): Promise<EssayState | null> => {
@@ -97,14 +93,39 @@ const { data: settings } = useQuery({
   enabled: computed(() => !!activeEssay.value && status.value === 'authenticated'),
 })
 
+const { data: recommendedTopic, isLoading: recommendedLoading } = useQuery({
+  queryKey: computed(() => ['recommended-topic', session.value?.accessToken ?? '']),
+  queryFn: async (): Promise<RecommendedTopic | null> => {
+    const token = session.value?.accessToken
+    if (!token) return null
+    return await $fetch<RecommendedTopic>(`${config.public.baseApiURL}/recommended_topic`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  enabled: computed(() => status.value === 'authenticated' && !!session.value?.accessToken),
+  staleTime: 1000 * 60 * 60,
+})
+
 const isWritingMode = computed(() => !!activeEssay.value && !essayLoading.value)
 const displayTheme = computed(() => {
   if (activeEssay.value) return activeEssay.value.theme
-  if (themeSource.value === 'recommended') return 'Тема 1'
+  if (themeSource.value === 'recommended') return recommendedTopic.value?.theme ?? ''
   if (themeSource.value === 'random' && randomTheme.value) return randomTheme.value
   if (themeSource.value === 'own') return ownThemeText.value.trim()
   return ''
 })
+
+const levelLabels: Record<string, string> = {
+  low: 'Начальный',
+  middle: 'Средний',
+  high: 'Продвинутый',
+}
+
+const levelColors: Record<string, string> = {
+  low: 'bg-blue-50 text-blue-700 border-blue-200',
+  middle: 'bg-amber-50 text-amber-700 border-amber-200',
+  high: 'bg-red-50 text-red-700 border-red-200',
+}
 
 const localText = ref('')
 watch(
@@ -398,24 +419,38 @@ useHead({
             </CardHeader>
             <CardContent class="space-y-4">
               <div class="flex flex-col gap-3">
-                <div class="flex items-center gap-2">
-                  <label class="flex flex-1 items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors hover:bg-primary/5" :class="themeSource === 'recommended' ? 'border-primary bg-primary/5' : 'border-gray-200'">
+                <div
+                  class="rounded-lg border p-3 cursor-pointer transition-colors hover:bg-primary/5"
+                  :class="themeSource === 'recommended' ? 'border-primary bg-primary/5' : 'border-gray-200'"
+                  @click="themeSource = 'recommended'"
+                >
+                  <label class="flex items-center gap-3 cursor-pointer">
                     <input v-model="themeSource" type="radio" value="recommended" class="sr-only" />
                     <Sparkles class="h-4 w-4 text-primary shrink-0" />
                     <span class="font-medium">Рекомендуемая тема</span>
-                    <span class="text-muted-foreground text-sm">Тема 1</span>
+                    <span
+                      v-if="recommendedTopic?.level"
+                      class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border"
+                      :class="levelColors[recommendedTopic.level] ?? 'bg-gray-50 text-gray-600 border-gray-200'"
+                    >
+                      {{ levelLabels[recommendedTopic.level] ?? recommendedTopic.level }}
+                    </span>
                   </label>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    class="shrink-0"
-                    :disabled="recommendedNotifyPending"
-                    @click="onRecommendedNotify"
-                  >
-                    <Loader2 v-if="recommendedNotifyPending" class="h-4 w-4 animate-spin" />
-                    <Bell v-else class="h-4 w-4" />
-                  </Button>
+                  <div class="ml-7 mt-2">
+                    <Loader2 v-if="recommendedLoading" class="h-4 w-4 animate-spin text-muted-foreground" />
+                    <p v-else-if="recommendedTopic?.theme" class="text-sm text-primary font-medium">
+                      {{ recommendedTopic.theme }}
+                    </p>
+                    <p v-else class="text-sm text-muted-foreground">
+                      Напишите хотя бы одно сочинение, чтобы получить персональную рекомендацию
+                    </p>
+                    <p
+                      v-if="recommendedTopic?.current_percent != null"
+                      class="text-xs text-muted-foreground mt-1"
+                    >
+                      Ваш текущий уровень: {{ recommendedTopic.current_percent }}% · Цель: {{ recommendedTopic.target_percent }}%
+                    </p>
+                  </div>
                 </div>
 
                 <div class="rounded-lg border p-3" :class="themeSource === 'random' ? 'border-primary bg-primary/5' : 'border-gray-200'">

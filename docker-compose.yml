@@ -88,6 +88,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       CHROMA_HOST: chroma-lingwo
       CHROMA_PORT: 8000
+      CLASSIFIED_THEMES_PATH: ./classified_themes.json
     volumes:
       - ./chroma/all_themes.txt:/app/chroma/all_themes.txt
       - ..:/host_data

@@ -28,6 +28,13 @@ class RandomTopicResponse(BaseModel):
     theme: str
 
 
+class RecommendedTopicResponse(BaseModel):
+    theme: str
+    level: str = Field(..., description="low / middle / high")
+    current_percent: Optional[float] = Field(None, description="Текущий средний процент (0–100)")
+    target_percent: int = Field(..., description="Целевой процент из настроек")
+
+
 class EssayStartRequest(BaseModel):
     theme: str = Field(..., min_length=1, max_length=512)
     type: Literal["ege", "essay"]

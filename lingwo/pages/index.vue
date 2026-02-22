@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
-import { FileEdit, TrendingUp, Award, Calendar, Lightbulb, Target, BookOpen, GraduationCap } from 'lucide-vue-next'
+import { FileEdit, TrendingUp, Award, Calendar, Lightbulb, Target, BookOpen, GraduationCap, Sparkles } from 'lucide-vue-next'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Skeleton } from '~/components/ui/skeleton'
@@ -49,6 +49,38 @@ const { data: essaysRaw, isLoading: essaysLoading } = useQuery({
 })
 
 const essays = computed(() => essaysRaw.value ?? [])
+
+interface RecommendedTopic {
+  theme: string
+  level: string
+  current_percent: number | null
+  target_percent: number
+}
+
+const { data: recommendedTopic, isLoading: recommendedLoading } = useQuery({
+  queryKey: computed(() => ['recommended-topic', session.value?.accessToken ?? '']),
+  queryFn: async (): Promise<RecommendedTopic | null> => {
+    const token = session.value?.accessToken
+    if (!token) return null
+    return await $fetch<RecommendedTopic>(`${config.public.baseApiURL}/recommended_topic`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  },
+  enabled: computed(() => status.value === 'authenticated' && !!session.value?.accessToken),
+  staleTime: 1000 * 60 * 60,
+})
+
+const levelLabels: Record<string, string> = {
+  low: 'Начальный',
+  middle: 'Средний',
+  high: 'Продвинутый',
+}
+
+const levelColors: Record<string, string> = {
+  low: 'text-blue-700 bg-blue-50 border-blue-200',
+  middle: 'text-amber-700 bg-amber-50 border-amber-200',
+  high: 'text-red-700 bg-red-50 border-red-200',
+}
 
 // Оценённые работы (есть total_score_per)
 const evaluatedEssays = computed(() =>
@@ -308,6 +340,49 @@ useHead({
               </NuxtLink>
             </div>
           </CardHeader>
+        </Card>
+
+        <!-- Рекомендуемая тема дня -->
+        <Card class="border-primary/20 bg-gradient-to-r from-primary/5 to-emerald-50/30">
+          <CardHeader class="pb-3">
+            <CardTitle class="flex items-center gap-2 text-lg">
+              <Sparkles class="h-5 w-5 text-primary" />
+              Тема дня
+            </CardTitle>
+            <CardDescription>Персональная рекомендация на основе вашего прогресса</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div v-if="recommendedLoading" class="space-y-2">
+              <Skeleton class="h-5 w-3/4" />
+              <Skeleton class="h-4 w-1/3" />
+            </div>
+            <div v-else-if="recommendedTopic?.theme">
+              <p class="text-base font-semibold text-gray-800 mb-2">{{ recommendedTopic.theme }}</p>
+              <div class="flex flex-wrap items-center gap-2">
+                <span
+                  class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border"
+                  :class="levelColors[recommendedTopic.level] ?? 'text-gray-600 bg-gray-50 border-gray-200'"
+                >
+                  {{ levelLabels[recommendedTopic.level] ?? recommendedTopic.level }}
+                </span>
+                <span v-if="recommendedTopic.current_percent != null" class="text-xs text-muted-foreground">
+                  Уровень: {{ recommendedTopic.current_percent }}% · Цель: {{ recommendedTopic.target_percent }}%
+                </span>
+              </div>
+              <NuxtLink
+                :to="{ path: '/essay/new', query: { theme: recommendedTopic.theme, type: 'essay' } }"
+                class="mt-3 inline-block"
+              >
+                <Button size="sm" variant="outline" class="border-primary/30 text-primary hover:bg-primary/10">
+                  <FileEdit class="mr-2 h-4 w-4" />
+                  Написать на эту тему
+                </Button>
+              </NuxtLink>
+            </div>
+            <p v-else class="text-sm text-muted-foreground">
+              Напишите первое сочинение, чтобы получить персональную рекомендацию.
+            </p>
+          </CardContent>
         </Card>
 
         <!-- Ключевые метрики (общие) -->
