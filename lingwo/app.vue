@@ -103,10 +103,10 @@ onMounted(() => {
             <div class="flex items-center gap-2">
               <span>Вопросы и предложения:</span>
               <a 
-                href="mailto:contact@lingwo.ru" 
+                href="mailto:contact@lingwoai.ru" 
                 class="text-primary hover:text-primary/80 font-medium transition-colors"
               >
-                contact@lingwo.ru
+                contact@lingwoai.ru
               </a>
             </div>
           </div>

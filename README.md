@@ -7,7 +7,7 @@
 
 <br />
 <div align="center">
-  <a href="https://lingwo.ru">
+  <a href="https://lingwoai.ru">
     <img src="media/banner.png" alt="Logo">
   </a>
 <h3 align="center">Лингво</h3>
@@ -15,7 +15,7 @@
   <p align="center">
     ИИ-репетитор для подготовки к экзамену по русскому языку
     <br />
-    <a href="https://lingwo.ru">Демо</a>
+    <a href="https://lingwoai.ru">Демо</a>
     &middot;
     <a href="https://github.com/kaiyofx/lingwo/issues/new?labels=bug&template=bug-report---.md">Сообщить об ошибке</a>
   </p>
@@ -97,7 +97,7 @@
 
 ## Контакты
 
-- Почта: [contact@lingwo.ru](mailto:contact@lingwo.ru)
+- Почта: [contact@lingwoai.ru](mailto:contact@lingwoai.ru)
 - Telegram: [@kaiyofx](https://t.me/kaiyofx)
 
 [contributors-shield]: https://img.shields.io/github/contributors/kaiyofx/lingwo.svg?style=for-the-badge

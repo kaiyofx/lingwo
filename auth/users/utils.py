@@ -33,12 +33,22 @@ def find_user(
 
 def create_initial_roles(sender, **kwargs):
     """Create Admin and Client roles so users.role_id always resolves. Runs after migrate (including non-interactive in Docker)."""
-    from .models import Role, UserRoles
+    import logging
+    from django.db.utils import ProgrammingError, OperationalError
 
-    roles_data = {
-        UserRoles.ADMIN: "Admin",
-        UserRoles.CLIENT: "Client",
-    }
+    logger = logging.getLogger(__name__)
+    try:
+        from .models import Role, UserRoles
 
-    for pk, name in roles_data.items():
-        Role.objects.get_or_create(pk=pk, defaults={"name": name})
+        roles_data = {
+            UserRoles.ADMIN: "Admin",
+            UserRoles.CLIENT: "Client",
+        }
+
+        for pk, name in roles_data.items():
+            Role.objects.get_or_create(pk=pk, defaults={"name": name})
+    except (ProgrammingError, OperationalError) as e:
+        logger.info(
+            "Roles creation skipped (role table missing or not ready): %s",
+            e,
+        )

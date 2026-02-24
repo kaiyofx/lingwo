@@ -146,7 +146,8 @@ def _load_classified_themes() -> Dict[str, List[str]]:
     if CLASSIFIED_THEMES_PATH:
         path = Path(CLASSIFIED_THEMES_PATH)
     else:
-        path = Path(__file__).resolve().parents[1] / "classified_themes.json"
+        # next to main.py (api/classified_themes.json)
+        path = Path(__file__).resolve().parent / "classified_themes.json"
 
     if not path.exists():
         raise FileNotFoundError(f"classified_themes.json не найден: {path}")
@@ -172,9 +173,9 @@ def _determine_recommendation_level(
     """Определяет уровень сложности темы на основе текущего среднего % и целевого %."""
 
     def _pct_to_level(pct: float) -> int:
-        if pct < 40:
+        if pct < 50:
             return 0  # low
-        if pct < 70:
+        if pct < 90:
             return 1  # middle
         return 2  # high
 
