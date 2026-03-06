@@ -44,32 +44,34 @@ services:
       - "traefik.http.middlewares.geo-ru.forwardauth.address=http://geo-check-lingwo:8080"
       - "traefik.http.middlewares.geo-ru.forwardauth.trustForwardHeader=true"
 
-  chroma-lingwo:
-    image: chromadb/chroma:0.6.3
+  qdrant-lingwo:
+    image: qdrant/qdrant
     restart: unless-stopped
     volumes:
-      - chroma-cache:/root/.cache/chroma
+      - qdrant-storage:/qdrant/storage
     networks:
       - prod-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://chroma-lingwo:8000/api/v1/heartbeat"]
+      test: ["CMD", "curl", "-f", "http://qdrant-lingwo:6333/readyz"]
       interval: 5s
       timeout: 5s
       retries: 5
       start_period: 10s
 
-  chroma-init-lingwo:
+  qdrant-init-lingwo:
     build:
-      context: ./chroma
+      context: ./qdrant
     depends_on:
-      chroma-lingwo:
+      qdrant-lingwo:
         condition: service_healthy
     restart: "no"
     networks:
       - prod-network
     environment:
-      CHROMA_SERVER_HOST: chroma-lingwo
-      CHROMA_SERVER_HTTP_PORT: 8000
+      QDRANT_HOST: qdrant-lingwo
+      QDRANT_PORT: 6333
+    volumes:
+      - ./qdrant/all_themes.txt:/qdrant_updater/all_themes.txt
 
   api-lingwo:
     build:
@@ -82,7 +84,7 @@ services:
       #   condition: service_healthy
       redis-lingwo:
         condition: service_healthy
-      chroma-init-lingwo:
+      qdrant-init-lingwo:
         condition: service_completed_successfully
     environment:
       DATABASE_URL: "postgresql+asyncpg://${PG_USER}:${PG_PASSWORD_ENCODE}@${PG_HOST}:${PG_PORT}/${PG_NAME}"
@@ -90,11 +92,11 @@ services:
       REDIS_HOST: redis-lingwo
       REDIS_PORT: "6379"
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      CHROMA_HOST: chroma-lingwo
-      CHROMA_PORT: 8000
+      QDRANT_HOST: qdrant-lingwo
+      QDRANT_PORT: 6333
       CLASSIFIED_THEMES_PATH: /app/api/classified_themes.json
     volumes:
-      - ./chroma/all_themes.txt:/app/chroma/all_themes.txt
+      - ./qdrant/all_themes.txt:/app/qdrant/all_themes.txt
       - ..:/host_data
     networks:
       - prod-network
@@ -106,7 +108,7 @@ services:
     ports:
       - 3000:3000
     depends_on:
-      chroma-init-lingwo:
+      qdrant-init-lingwo:
         condition: service_completed_successfully
     environment:
       NUXT_AUTH_URL: ${NUXT_AUTH_URL:-http://auth-lingwo:8000}
@@ -173,4 +175,4 @@ networks:
     name: prod-network
 
 volumes:
-  chroma-cache:
+  qdrant-storage:

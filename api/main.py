@@ -14,8 +14,9 @@ if __name__ == "__main__" and __package__ is None:
     sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from contextlib import asynccontextmanager
-from chromadb import Settings, HttpClient  # type: ignore
 from dotenv import load_dotenv
+from qdrant_client import QdrantClient
+from sentence_transformers import SentenceTransformer
 import uvicorn
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Security
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,8 +48,10 @@ from api.schemas import (
 
 load_dotenv()
 
-CHROMA_HOST = os.getenv("CHROMA_HOST", "localhost")
-CHROMA_PORT = int(os.getenv("CHROMA_PORT", "4200"))
+QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
+QDRANT_PORT = int(os.getenv("QDRANT_PORT", "6333"))
+QDRANT_COLLECTION_NAME = os.getenv("QDRANT_COLLECTION_NAME", "themes")
+EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 THEMES_PATH = os.getenv("THEMES_PATH")
 API_HOST = os.getenv("API_HOST", "127.0.0.1")
 API_PORT = int(os.getenv("API_PORT", "8001"))
@@ -78,6 +81,8 @@ APP.add_middleware(
 )
 
 _cached_themes: Optional[List[str]] = None
+_qdrant_client: Optional[QdrantClient] = None
+_embedding_model: Optional[SentenceTransformer] = None
 
 
 async def get_current_user(
@@ -103,7 +108,7 @@ def _get_themes_path() -> Path:
     if THEMES_PATH:
         return Path(THEMES_PATH)
     repo_root = Path(__file__).resolve().parents[1]
-    return repo_root / "chroma" / "all_themes.txt"
+    return repo_root / "qdrant" / "all_themes.txt"
 
 
 def _load_all_themes() -> List[str]:
@@ -202,23 +207,42 @@ def _pick_daily_theme(themes: List[str], user_id: str, today: date) -> str:
     return rng.choice(themes)
 
 
-def _get_chroma_collection():
-    client = HttpClient(
-        host=CHROMA_HOST,
-        port=CHROMA_PORT,
-        settings=Settings(anonymized_telemetry=False),
-    )
-    return client.get_or_create_collection(name="themes")
+def _get_qdrant_client() -> QdrantClient:
+    global _qdrant_client
+    if _qdrant_client is None:
+        _qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+    return _qdrant_client
+
+
+def _get_embedding_model() -> SentenceTransformer:
+    global _embedding_model
+    if _embedding_model is None:
+        _embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+    return _embedding_model
 
 
 def _random_theme_from_sections(sections: List[str]) -> str:
-    collection = _get_chroma_collection()
-    result = collection.query(query_texts=sections, n_results=60)
-    docs = result.get("documents", [])
-    flat_docs = [doc for group in docs for doc in group if doc]
-    if not flat_docs:
+    model = _get_embedding_model()
+    query_vector = model.encode(" ".join(sections), normalize_embeddings=True).tolist()
+
+    client = _get_qdrant_client()
+    results = client.search(
+        collection_name=QDRANT_COLLECTION_NAME,
+        query_vector=query_vector,
+        limit=60,
+        with_payload=True,
+    )
+
+    candidate_themes = []
+    for point in results:
+        payload = point.payload or {}
+        theme = payload.get("theme")
+        if isinstance(theme, str) and theme:
+            candidate_themes.append(theme)
+
+    if not candidate_themes:
         return random.choice(_load_all_themes())
-    return random.choice(flat_docs)
+    return random.choice(candidate_themes)
 
 
 def _redis_key(user_id: str) -> str:

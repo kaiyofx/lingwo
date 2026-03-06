@@ -40,9 +40,9 @@
 
 ## О проекте
 
-**Лингво** — сервис для подготовки школьников к сочинению по русскому языку. Использует связку модели gpt-4o и векторной базы данных [Chroma](https://github.com/chroma-core/chroma).
+**Лингво** — сервис для подготовки школьников к сочинению по русскому языку. Использует связку модели gpt-4o и векторной базы данных [Qdrant](https://github.com/qdrant/qdrant).
 
-Стек: фронтенд (Nuxt 3), API (FastAPI), сервис авторизации (Django), PostgreSQL, ChromaDB.
+Стек: фронтенд (Nuxt 3), API (FastAPI), сервис авторизации (Django), PostgreSQL, Qdrant.
 
 ## Запустить в Docker
 
@@ -64,13 +64,13 @@
    docker compose up -d
    ```
 
-Порядок запуска: сначала поднимаются **PostgreSQL** и **Chroma**, затем после готовности Chroma выполняется **chroma-init** (инициализация коллекций), после его успешного завершения стартуют **API** и **frontend** (Nuxt). Сервис **auth** можно подключать к той же БД (см. переменные).
+Порядок запуска: сначала поднимаются **PostgreSQL** и **Qdrant**, затем после готовности Qdrant выполняется **qdrant-init** (инициализация коллекций), после его успешного завершения стартуют **API** и **frontend** (Nuxt). Сервис **auth** можно подключать к той же БД (см. переменные).
 
 После запуска:
 - фронтенд: http://localhost:3000  
 - API: http://localhost:8001  
 - auth: http://localhost:8000  
-- Chroma: http://localhost:8002  
+- Qdrant: http://localhost:6333  
 
 ### Переменные
 
@@ -80,7 +80,7 @@
 
 **Redis** (auth, api): `REDIS_URL`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
 
-**API**: `DATABASE_URL` в compose собирается из PG_*; при необходимости — `CHROMA_HOST`, `CHROMA_PORT`, `LLAMA_MODEL_PATH`, `THEMES_PATH`.
+**API**: `DATABASE_URL` в compose собирается из PG_*; при необходимости — `QDRANT_HOST`, `QDRANT_PORT`, `QDRANT_COLLECTION_NAME`, `EMBEDDING_MODEL_NAME`, `LLAMA_MODEL_PATH`, `THEMES_PATH`.
 
 **Auth**: `AUTHSECRET_KEY`, `SIGNING_KEY`, `VERIFYING_KEY`, `AUTH_SECRET`, переменные для почты (`EMAIL_HOST`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` и т.д.) — см. `.env.example` или существующий `.env`
 
