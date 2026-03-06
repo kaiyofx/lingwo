@@ -1,4 +1,5 @@
 import os
+import time
 from pathlib import Path
 
 from qdrant_client import QdrantClient
@@ -13,6 +14,8 @@ EMBEDDING_MODEL_NAME = os.getenv(
     "EMBEDDING_MODEL_NAME",
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
 )
+QDRANT_WAIT_TIMEOUT_SEC = int(os.getenv("QDRANT_WAIT_TIMEOUT_SEC", "120"))
+QDRANT_WAIT_INTERVAL_SEC = float(os.getenv("QDRANT_WAIT_INTERVAL_SEC", "2"))
 
 
 def get_themes_path() -> Path:
@@ -47,6 +50,19 @@ def main() -> None:
     vector_size = len(embeddings[0])
 
     client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+    deadline = time.time() + QDRANT_WAIT_TIMEOUT_SEC
+    while True:
+        try:
+            client.get_collections()
+            break
+        except Exception:
+            if time.time() >= deadline:
+                raise RuntimeError(
+                    f"Qdrant недоступен за {QDRANT_WAIT_TIMEOUT_SEC}с: "
+                    f"{QDRANT_HOST}:{QDRANT_PORT}"
+                )
+            time.sleep(QDRANT_WAIT_INTERVAL_SEC)
+
     if not client.collection_exists(collection_name=QDRANT_COLLECTION_NAME):
         client.create_collection(
             collection_name=QDRANT_COLLECTION_NAME,

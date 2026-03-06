@@ -51,19 +51,13 @@ services:
       - qdrant-storage:/qdrant/storage
     networks:
       - prod-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://qdrant-lingwo:6333/readyz"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 
   qdrant-init-lingwo:
     build:
       context: ./qdrant
     depends_on:
       qdrant-lingwo:
-        condition: service_healthy
+        condition: service_started
     restart: "no"
     networks:
       - prod-network
