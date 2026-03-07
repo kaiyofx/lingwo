@@ -29,14 +29,18 @@ k5 — Грамотность. «Незачет» если на 100 слов в 
 
 Для зачета за работу в целом нужны зачет по k1 и k2 и плюс зачет хотя бы по одному из k3 или k4. Критерий k5 учитывается отдельно.
 
-Выяви типы ошибок по категориям: punctuation, spelling, grammar, style.
+Выяви ошибки по четырём типам (указывай строго эти латинские ключи):
+- punctuation — пунктуация (запятые, точки, тире и т.п.)
+- spelling — орфография (неправильное написание слова)
+- grammar — грамматика (род, число, падеж, спряжение и т.п.)
+- style — речевые ошибки (повторы, неудачное слово, нарушение норм)
 
-Для каждой ошибки укажи индексы символов в исходном тексте: start — индекс первого символа фрагмента, end — индекс сразу после последнего (как срез Python: text[start:end]). Нумерация с 0. Пример: слово "привет" из 6 символов на позициях 10–15 включительно: start=10, end=16.
+Для каждого типа укажи массив fragments: точные цитаты из текста сочинения — подстроки, в которых допущена ошибка. Копируй фрагменты буквально из текста (слово или короткую фразу). Не придумывай индексы — только fragments.
 
 Используй только для входа только текст сочинения, никаких других данных. Сам ничего не добавляй. В полях comment пиши кратко, в одну строку; внутри JSON не используй переносы строк в строках.
 
 Ответь ТОЛЬКО валидным JSON без markdown. У каждого критерия score — только 0 или 1:
-{{"criteries": {{"k1": {{"score": 0 или 1, "comment": "...", "found_in_text": []}}, "k2": {{"score": 0 или 1, "comment": "...", "suggestions": []}}, "k3": {{"score": 0 или 1, "comment": "..."}}, "k4": {{"score": 0 или 1, "comment": "..."}}, "k5": {{"score": 0 или 1, "comment": "..."}}}}, "common_mistakes": [{{"type": "punctuation", "count": N, "ranges": [[start, end]]}}, {{"type": "spelling", "count": N, "ranges": [[start, end]]}}, {{"type": "grammar", "count": N, "ranges": [[start, end]]}}, {{"type": "style", "count": N, "ranges": [[start, end]]}}]}}
+{{"criteries": {{"k1": {{"score": 0 или 1, "comment": "...", "found_in_text": []}}, "k2": {{"score": 0 или 1, "comment": "...", "suggestions": []}}, "k3": {{"score": 0 или 1, "comment": "..."}}, "k4": {{"score": 0 или 1, "comment": "..."}}, "k5": {{"score": 0 или 1, "comment": "..."}}}}, "common_mistakes": [{{"type": "punctuation", "count": N, "fragments": ["цитата из текста"]}}, {{"type": "spelling", "count": N, "fragments": ["слово с ошибкой"]}}, {{"type": "grammar", "count": N, "fragments": ["фраза с ошибкой"]}}, {{"type": "style", "count": N, "fragments": []}}]}}
 
 Тема: {theme}
 
@@ -63,14 +67,15 @@ PROMPT_EGE = """Ты — эксперт по проверке сочинений
 К10 — Речевые нормы (0–3).
 Максимум за сочинение — 22 балла.
 
-Выяви типы ошибок: punctuation, spelling, grammar, style.
+Выяви ошибки по четырём типам (указывай строго эти латинские ключи):
+- punctuation — пунктуация; spelling — орфография; grammar — грамматика; style — речевые ошибки.
 
-Для каждой ошибки укажи индексы символов в исходном тексте: start — индекс первого символа фрагмента, end — индекс сразу после последнего (как срез Python: text[start:end]). Нумерация с 0. Пример: слово "привет" из 6 символов на позициях 10–15 включительно: start=10, end=16.
+Для каждого типа укажи массив fragments: точные цитаты из текста — подстроки с ошибкой. Копируй буквально из текста. Не придумывай индексы — только fragments.
 
 Используй только для входа только текст сочинения, никаких других данных. Сам ничего не добавляй. В полях comment пиши кратко, в одну строку; внутри JSON не используй переносы строк в строках.
 
 Ответь ТОЛЬКО валидным JSON без markdown, в формате:
-{{"criteries": {{"k1": {{"score": N, "comment": "..."}}, "k2": {{"score": N, "comment": "..."}}, "k3": {{"score": N, "comment": "..."}}, "k4": {{"score": N, "comment": "..."}}, "k5": {{"score": N, "comment": "..."}}, "k6": {{"score": N, "comment": "..."}}, "k7": {{"score": N, "comment": "..."}}, "k8": {{"score": N, "comment": "..."}}, "k9": {{"score": N, "comment": "..."}}, "k10": {{"score": N, "comment": "..."}}}}, "common_mistakes": [{{"type": "punctuation", "count": N, "ranges": [[start, end]]}}, {{"type": "spelling", "count": N, "ranges": [[start, end]]}}, {{"type": "grammar", "count": N, "ranges": [[start, end]]}}, {{"type": "style", "count": N, "ranges": [[start, end]]}}]}}
+{{"criteries": {{"k1": {{"score": N, "comment": "..."}}, ... "k10": {{"score": N, "comment": "..."}}}}, "common_mistakes": [{{"type": "punctuation", "count": N, "fragments": ["цитата"]}}, {{"type": "spelling", "count": N, "fragments": ["слово"]}}, {{"type": "grammar", "count": N, "fragments": []}}, {{"type": "style", "count": N, "fragments": []}}]}}
 
 Тема/проблема: {theme}
 
@@ -191,6 +196,55 @@ def _get_response_text(out: dict[str, Any]) -> str:
     return ""
 
 
+# Нормализация типа ошибки: русские и варианты -> канонические ключи фронта
+MISTAKE_TYPE_ALIASES: dict[str, str] = {
+    "punctuation": "punctuation",
+    "пунктуация": "punctuation",
+    "punct": "punctuation",
+    "spelling": "spelling",
+    "орфография": "spelling",
+    "spell": "spelling",
+    "грамматика": "grammar",
+    "grammar": "grammar",
+    "style": "style",
+    "речевая": "style",
+    "речь": "style",
+    "речевые": "style",
+}
+
+
+def _normalize_mistake_type(raw_type: str) -> str:
+    """Приводит тип ошибки к одному из: punctuation, spelling, grammar, style."""
+    key = (raw_type or "").strip().lower()
+    return MISTAKE_TYPE_ALIASES.get(key) or "style"
+
+
+def _fragments_to_ranges(text: str, fragments: list[Any]) -> list[list[int]]:
+    """
+    Ищет каждую строку из fragments в text и возвращает список [start, end] (end исключающий).
+    Повторяющиеся вхождения одного фрагмента учитываются. Сначала поиск точный, при неудаче — без учёта регистра.
+    """
+    if not text or not isinstance(fragments, list):
+        return []
+    result: list[list[int]] = []
+    for f in fragments:
+        if not isinstance(f, str):
+            continue
+        fragment = f.strip()
+        if not fragment or len(fragment) > 2000:
+            continue
+        start = 0
+        while True:
+            pos = text.find(fragment, start)
+            if pos == -1:
+                pos = text.lower().find(fragment.lower(), start)
+            if pos == -1:
+                break
+            result.append([pos, pos + len(fragment)])
+            start = pos + 1
+    return result
+
+
 def _clamp_and_merge_ranges(ranges: list[list[Any]], text_len: int) -> list[list[int]]:
     """
     Приводит диапазоны к длине текста: обрезка по границам [0, text_len],
@@ -224,6 +278,23 @@ def _clamp_and_merge_ranges(ranges: list[list[Any]], text_len: int) -> list[list
         else:
             merged.append([start, end])
     return merged
+
+
+def _resolve_ranges_from_fragments(common_mistakes: list[dict[str, Any]], text: str) -> list[dict[str, Any]]:
+    """Если в элементе есть fragments — вычисляет ranges поиском по text; удаляет ключ fragments из выхода."""
+    out: list[dict[str, Any]] = []
+    for m in common_mistakes:
+        if not isinstance(m, dict):
+            continue
+        m = dict(m)
+        fragments = m.pop("fragments", None)
+        if isinstance(fragments, list) and fragments:
+            computed = _fragments_to_ranges(text, fragments)
+            m["ranges"] = _clamp_and_merge_ranges(computed, len(text))
+        elif "ranges" not in m or not m["ranges"]:
+            m.setdefault("ranges", [])
+        out.append(m)
+    return out
 
 
 def _apply_ranges_to_text(common_mistakes: list[dict[str, Any]], text_len: int) -> list[dict[str, Any]]:
@@ -264,26 +335,28 @@ def _normalize_result_essay(raw: dict[str, Any]) -> dict[str, Any]:
         mistakes = []
     normalized_mistakes = []
     for m in mistakes:
-        if isinstance(m, dict) and "type" in m and "count" in m:
-            mistake_type = str(m["type"])
-            count = int(m["count"])
-            # Обрабатываем ranges - массив [start, end] индексов
-            ranges = m.get("ranges", [])
-            if isinstance(ranges, list):
-                # Валидируем ranges: должны быть массивы из двух чисел [start, end]
-                valid_ranges = []
-                for r in ranges:
-                    if isinstance(r, list) and len(r) == 2:
-                        start, end = r[0], r[1]
-                        if isinstance(start, (int, float)) and isinstance(end, (int, float)):
-                            valid_ranges.append([int(start), int(end)])
-                normalized_mistakes.append({
-                    "type": mistake_type,
-                    "count": count,
-                    "ranges": valid_ranges
-                })
-            else:
-                normalized_mistakes.append({"type": mistake_type, "count": count, "ranges": []})
+        if isinstance(m, dict) and "type" in m:
+            raw_type = str(m.get("type", ""))
+            mistake_type = _normalize_mistake_type(raw_type)
+            count = int(m["count"]) if m.get("count") is not None else 0
+            ranges = m.get("ranges") or []
+            fragments = m.get("fragments") or []
+            if not isinstance(ranges, list):
+                ranges = []
+            if not isinstance(fragments, list):
+                fragments = []
+            valid_ranges = []
+            for r in ranges:
+                if isinstance(r, (list, tuple)) and len(r) == 2:
+                    start, end = r[0], r[1]
+                    if isinstance(start, (int, float)) and isinstance(end, (int, float)):
+                        valid_ranges.append([int(start), int(end)])
+            normalized_mistakes.append({
+                "type": mistake_type,
+                "count": count,
+                "ranges": valid_ranges,
+                "fragments": [str(x).strip() for x in fragments if isinstance(x, str) and x.strip()],
+            })
     allowed = {"punctuation", "spelling", "grammar", "style"}
     common_mistakes = [x for x in normalized_mistakes if x["type"] in allowed]
     return {"criteries": result_criteries, "common_mistakes": common_mistakes}
@@ -314,26 +387,28 @@ def _normalize_result_ege(raw: dict[str, Any]) -> dict[str, Any]:
         mistakes = []
     normalized_mistakes = []
     for m in mistakes:
-        if isinstance(m, dict) and "type" in m and "count" in m:
-            mistake_type = str(m["type"])
-            count = int(m["count"])
-            # Обрабатываем ranges - массив [start, end] индексов
-            ranges = m.get("ranges", [])
-            if isinstance(ranges, list):
-                # Валидируем ranges: должны быть массивы из двух чисел [start, end]
-                valid_ranges = []
-                for r in ranges:
-                    if isinstance(r, list) and len(r) == 2:
-                        start, end = r[0], r[1]
-                        if isinstance(start, (int, float)) and isinstance(end, (int, float)):
-                            valid_ranges.append([int(start), int(end)])
-                normalized_mistakes.append({
-                    "type": mistake_type,
-                    "count": count,
-                    "ranges": valid_ranges
-                })
-            else:
-                normalized_mistakes.append({"type": mistake_type, "count": count, "ranges": []})
+        if isinstance(m, dict) and "type" in m:
+            raw_type = str(m.get("type", ""))
+            mistake_type = _normalize_mistake_type(raw_type)
+            count = int(m["count"]) if m.get("count") is not None else 0
+            ranges = m.get("ranges") or []
+            fragments = m.get("fragments") or []
+            if not isinstance(ranges, list):
+                ranges = []
+            if not isinstance(fragments, list):
+                fragments = []
+            valid_ranges = []
+            for r in ranges:
+                if isinstance(r, (list, tuple)) and len(r) == 2:
+                    start, end = r[0], r[1]
+                    if isinstance(start, (int, float)) and isinstance(end, (int, float)):
+                        valid_ranges.append([int(start), int(end)])
+            normalized_mistakes.append({
+                "type": mistake_type,
+                "count": count,
+                "ranges": valid_ranges,
+                "fragments": [str(x).strip() for x in fragments if isinstance(x, str) and x.strip()],
+            })
     allowed = {"punctuation", "spelling", "grammar", "style"}
     common_mistakes = [x for x in normalized_mistakes if x["type"] in allowed]
     return {"criteries": result_criteries, "common_mistakes": common_mistakes}
@@ -419,7 +494,8 @@ def evaluate_essay_sync(theme: str, text: str, essay_type: str = "essay") -> dic
     criteries = normalized["criteries"]
     common_mistakes_raw = normalized["common_mistakes"]
     text_len = len(text_truncated)
-    common_mistakes = _apply_ranges_to_text(common_mistakes_raw, text_len)
+    common_mistakes_resolved = _resolve_ranges_from_fragments(common_mistakes_raw, text_truncated)
+    common_mistakes = _apply_ranges_to_text(common_mistakes_resolved, text_len)
 
     total_raw = sum(criteries.get(k, {}).get("score", 0) for k in criterion_keys)
     total_raw = min(total_raw, max_score)
