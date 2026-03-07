@@ -33,7 +33,7 @@ k5 — Грамотность. «Незачет» если на 100 слов в 
 
 Для каждой ошибки укажи индексы символов в исходном тексте: start — индекс первого символа фрагмента, end — индекс сразу после последнего (как срез Python: text[start:end]). Нумерация с 0. Пример: слово "привет" из 6 символов на позициях 10–15 включительно: start=10, end=16.
 
-Используй только для входа только текст сочинения, никаких других данных. Сам ничего не добавляй.
+Используй только для входа только текст сочинения, никаких других данных. Сам ничего не добавляй. В полях comment пиши кратко, в одну строку; внутри JSON не используй переносы строк в строках.
 
 Ответь ТОЛЬКО валидным JSON без markdown. У каждого критерия score — только 0 или 1:
 {{"criteries": {{"k1": {{"score": 0 или 1, "comment": "...", "found_in_text": []}}, "k2": {{"score": 0 или 1, "comment": "...", "suggestions": []}}, "k3": {{"score": 0 или 1, "comment": "..."}}, "k4": {{"score": 0 или 1, "comment": "..."}}, "k5": {{"score": 0 или 1, "comment": "..."}}}}, "common_mistakes": [{{"type": "punctuation", "count": N, "ranges": [[start, end]]}}, {{"type": "spelling", "count": N, "ranges": [[start, end]]}}, {{"type": "grammar", "count": N, "ranges": [[start, end]]}}, {{"type": "style", "count": N, "ranges": [[start, end]]}}]}}
@@ -67,7 +67,7 @@ PROMPT_EGE = """Ты — эксперт по проверке сочинений
 
 Для каждой ошибки укажи индексы символов в исходном тексте: start — индекс первого символа фрагмента, end — индекс сразу после последнего (как срез Python: text[start:end]). Нумерация с 0. Пример: слово "привет" из 6 символов на позициях 10–15 включительно: start=10, end=16.
 
-Используй только для входа только текст сочинения, никаких других данных. Сам ничего не добавляй.
+Используй только для входа только текст сочинения, никаких других данных. Сам ничего не добавляй. В полях comment пиши кратко, в одну строку; внутри JSON не используй переносы строк в строках.
 
 Ответь ТОЛЬКО валидным JSON без markdown, в формате:
 {{"criteries": {{"k1": {{"score": N, "comment": "..."}}, "k2": {{"score": N, "comment": "..."}}, "k3": {{"score": N, "comment": "..."}}, "k4": {{"score": N, "comment": "..."}}, "k5": {{"score": N, "comment": "..."}}, "k6": {{"score": N, "comment": "..."}}, "k7": {{"score": N, "comment": "..."}}, "k8": {{"score": N, "comment": "..."}}, "k9": {{"score": N, "comment": "..."}}, "k10": {{"score": N, "comment": "..."}}}}, "common_mistakes": [{{"type": "punctuation", "count": N, "ranges": [[start, end]]}}, {{"type": "spelling", "count": N, "ranges": [[start, end]]}}, {{"type": "grammar", "count": N, "ranges": [[start, end]]}}, {{"type": "style", "count": N, "ranges": [[start, end]]}}]}}
@@ -111,7 +111,7 @@ def _chat_completion(prompt: str, max_tokens: int = 1024, temperature: float = 0
 
 
 def _extract_json(text: str) -> dict[str, Any]:
-    """Достаёт первый полный JSON-объект из ответа модели (игнорирует текст после него — «Extra data»)."""
+    """Достаёт первый полный JSON-объект из ответа модели. При обрыве ответа пробует доставить закрывающие скобки."""
     text = text.strip()
     match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
     if match:
@@ -144,10 +144,33 @@ def _extract_json(text: str) -> dict[str, Any]:
             if depth == 0:
                 return json.loads(text[first : i + 1])
 
+    chunk = text[first:]
+    for repaired in (chunk, chunk.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")):
+        try:
+            return json.loads(repaired)
+        except json.JSONDecodeError:
+            pass
+    for attempt in range(40):
+        try:
+            return json.loads(chunk)
+        except json.JSONDecodeError:
+            pass
+        s = chunk.rstrip()
+        if s.endswith("}") or s.endswith("]"):
+            break
+        if s.endswith('"'):
+            chunk += '"'
+        elif s.endswith(","):
+            chunk += "null}"
+        else:
+            chunk += "]}"
     last = text.rfind("}")
     if last != -1 and last > first:
-        text = text[first : last + 1]
-    return json.loads(text)
+        try:
+            return json.loads(text[first : last + 1])
+        except json.JSONDecodeError:
+            pass
+    raise json.JSONDecodeError("No valid JSON object found", text, first)
 
 
 def _get_response_text(out: dict[str, Any]) -> str:
@@ -374,7 +397,7 @@ def evaluate_essay_sync(theme: str, text: str, essay_type: str = "essay") -> dic
     # Экранируем фигурные скобки в тексте пользователя, чтобы они не конфликтовали с .format()
     text_escaped = text_truncated.replace("{", "{{").replace("}", "}}")
     prompt = prompt_tpl.format(theme=theme, text=text_escaped)
-    out = _chat_completion(prompt, max_tokens=1536, temperature=0.3)
+    out = _chat_completion(prompt, max_tokens=4096, temperature=0.3)
     response_text = _get_response_text(out)
     if not response_text:
         logger.warning("essay_eval: модель вернула пустой ответ")
