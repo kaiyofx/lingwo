@@ -80,7 +80,7 @@
 
 **Redis** (auth, api): `REDIS_URL`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
 
-**API**: `DATABASE_URL` в compose собирается из PG_*; при необходимости — `QDRANT_HOST`, `QDRANT_PORT`, `QDRANT_COLLECTION_NAME`, `EMBEDDING_MODEL_NAME`, `LLAMA_MODEL_PATH`, `THEMES_PATH`.
+**API**: `DATABASE_URL` в compose собирается из PG_*; при необходимости — `QDRANT_HOST`, `QDRANT_PORT`, `QDRANT_COLLECTION_NAME`, `EMBEDDING_MODEL_NAME`, `THEMES_PATH`. Для оценки сочинений используется [Pollinations API](https://enter.pollinations.ai): задайте `POLLINATIONS_API_KEY` (ключ на enter.pollinations.ai), опционально `POLLINATIONS_MODEL` (по умолчанию `gemini-fast`), `POLLINATIONS_BASE_URL` (по умолчанию `https://gen.pollinations.ai`).
 
 **Auth**: `AUTHSECRET_KEY`, `SIGNING_KEY`, `VERIFYING_KEY`, `AUTH_SECRET`, переменные для почты (`EMAIL_HOST`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` и т.д.) — см. `.env.example` или существующий `.env`
 
