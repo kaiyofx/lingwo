@@ -6,7 +6,7 @@ import os
 import random
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 if __name__ == "__main__" and __package__ is None:
     import sys
@@ -226,16 +226,27 @@ def _random_theme_from_sections(sections: List[str]) -> str:
     query_vector = model.encode(" ".join(sections), normalize_embeddings=True).tolist()
 
     client = _get_qdrant_client()
-    results = client.search(
-        collection_name=QDRANT_COLLECTION_NAME,
-        query_vector=query_vector,
-        limit=60,
-        with_payload=True,
-    )
+    # qdrant-client API differs between versions:
+    # newer versions use query_points, older expose search.
+    if hasattr(client, "query_points"):
+        response = client.query_points(
+            collection_name=QDRANT_COLLECTION_NAME,
+            query=query_vector,
+            limit=60,
+            with_payload=True,
+        )
+        results = response.points if hasattr(response, "points") else response
+    else:
+        results = client.search(
+            collection_name=QDRANT_COLLECTION_NAME,
+            query_vector=query_vector,
+            limit=60,
+            with_payload=True,
+        )
 
     candidate_themes = []
     for point in results:
-        payload = point.payload or {}
+        payload: dict[str, Any] = (getattr(point, "payload", None) or {})
         theme = payload.get("theme")
         if isinstance(theme, str) and theme:
             candidate_themes.append(theme)
