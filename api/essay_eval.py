@@ -31,7 +31,7 @@ k5 — Грамотность. «Незачет» если на 100 слов в 
 
 Выяви типы ошибок по категориям: punctuation, spelling, grammar, style.
 
-Для каждой ошибки укажи точные индексы начала и конца фрагмента в тексте (start и end - позиции символов в исходном тексте, начиная с 0). Например, если ошибка в слове "привет" на позициях 10-16, то start=10, end=16.
+Для каждой ошибки укажи индексы символов в исходном тексте: start — индекс первого символа фрагмента, end — индекс сразу после последнего (как срез Python: text[start:end]). Нумерация с 0. Пример: слово "привет" из 6 символов на позициях 10–15 включительно: start=10, end=16.
 
 Используй только для входа только текст сочинения, никаких других данных. Сам ничего не добавляй.
 
@@ -65,7 +65,7 @@ PROMPT_EGE = """Ты — эксперт по проверке сочинений
 
 Выяви типы ошибок: punctuation, spelling, grammar, style.
 
-Для каждой ошибки укажи точные индексы начала и конца фрагмента в тексте (start и end - позиции символов в исходном тексте, начиная с 0). Например, если ошибка в слове "привет" на позициях 10-16, то start=10, end=16.
+Для каждой ошибки укажи индексы символов в исходном тексте: start — индекс первого символа фрагмента, end — индекс сразу после последнего (как срез Python: text[start:end]). Нумерация с 0. Пример: слово "привет" из 6 символов на позициях 10–15 включительно: start=10, end=16.
 
 Используй только для входа только текст сочинения, никаких других данных. Сам ничего не добавляй.
 
@@ -166,6 +166,55 @@ def _get_response_text(out: dict[str, Any]) -> str:
             if content is not None:
                 return (content if isinstance(content, str) else str(content)).strip()
     return ""
+
+
+def _clamp_and_merge_ranges(ranges: list[list[Any]], text_len: int) -> list[list[int]]:
+    """
+    Приводит диапазоны к длине текста: обрезка по границам [0, text_len],
+    отсечение невалидных (start >= end), сортировка и слияние перекрывающихся.
+    Индексы в формате [start, end), end исключающий.
+    """
+    if text_len <= 0:
+        return []
+    out: list[list[int]] = []
+    for r in ranges:
+        if not isinstance(r, (list, tuple)) or len(r) != 2:
+            continue
+        try:
+            start, end = int(r[0]), int(r[1])
+        except (TypeError, ValueError):
+            continue
+        if start > end:
+            start, end = end, start
+        start = max(0, min(start, text_len))
+        end = max(0, min(end, text_len))
+        if start < end:
+            out.append([start, end])
+    if not out:
+        return []
+    out.sort(key=lambda x: (x[0], x[1]))
+    merged: list[list[int]] = [out[0][:]]
+    for start, end in out[1:]:
+        last = merged[-1]
+        if start <= last[1]:
+            last[1] = max(last[1], end)
+        else:
+            merged.append([start, end])
+    return merged
+
+
+def _apply_ranges_to_text(common_mistakes: list[dict[str, Any]], text_len: int) -> list[dict[str, Any]]:
+    """Для каждого элемента common_mistakes перезаписывает ranges с привязкой к text_len."""
+    result = []
+    for m in common_mistakes:
+        if not isinstance(m, dict):
+            continue
+        ranges_raw = m.get("ranges") or []
+        if not isinstance(ranges_raw, list):
+            ranges_raw = []
+        clamped = _clamp_and_merge_ranges(ranges_raw, text_len)
+        result.append({**m, "ranges": clamped})
+    return result
 
 
 def _normalize_result_essay(raw: dict[str, Any]) -> dict[str, Any]:
@@ -345,7 +394,9 @@ def evaluate_essay_sync(theme: str, text: str, essay_type: str = "essay") -> dic
 
     normalized = normalizer(raw)
     criteries = normalized["criteries"]
-    common_mistakes = normalized["common_mistakes"]
+    common_mistakes_raw = normalized["common_mistakes"]
+    text_len = len(text_truncated)
+    common_mistakes = _apply_ranges_to_text(common_mistakes_raw, text_len)
 
     total_raw = sum(criteries.get(k, {}).get("score", 0) for k in criterion_keys)
     total_raw = min(total_raw, max_score)
