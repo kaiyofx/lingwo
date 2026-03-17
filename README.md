@@ -29,7 +29,6 @@
       <a href="#запустить-в-docker">Запустить в Docker</a>
       <ul>
         <li><a href="#запуск-лингво">Запуск Лингво</a></li>
-        <li><a href="#переменные">Переменные</a></li>
       </ul>
     </li>
     <li><a href="#функционал">Функционал</a></li>
@@ -64,25 +63,11 @@
    docker compose up -d
    ```
 
-Порядок запуска: сначала поднимаются **PostgreSQL** и **Qdrant**, затем после готовности Qdrant выполняется **qdrant-init** (инициализация коллекций), после его успешного завершения стартуют **API** и **frontend** (Nuxt). Сервис **auth** можно подключать к той же БД (см. переменные).
-
 После запуска:
 - фронтенд: http://localhost:3000  
 - API: http://localhost:8001  
 - auth: http://localhost:8000  
 - Qdrant: http://localhost:6333  
-
-### Переменные
-
-**PostgreSQL** (сервисы `pg`, `api`; для auth при использовании той же БД):
-- `PG_USER`, `PG_PASSWORD`, `PG_NAME` — пользователь, пароль, имя БД (в compose по умолчанию: `postgres`, `1234`, `lingwo`)
-- При запуске через Docker для auth: `PG_HOST=pg`, `PG_PORT=5432`
-
-**Redis** (auth, api): `REDIS_URL`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
-
-**API**: `DATABASE_URL` в compose собирается из PG_*; при необходимости — `QDRANT_HOST`, `QDRANT_PORT`, `QDRANT_COLLECTION_NAME`, `EMBEDDING_MODEL_NAME`, `LLAMA_MODEL_PATH`, `THEMES_PATH`.
-
-**Auth**: `AUTHSECRET_KEY`, `SIGNING_KEY`, `VERIFYING_KEY`, `AUTH_SECRET`, переменные для почты (`EMAIL_HOST`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` и т.д.) — см. `.env.example` или существующий `.env`
 
 ## Функционал
 
