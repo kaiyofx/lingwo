@@ -292,8 +292,8 @@ useHead({
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
               </svg>
             </div>
-            <h4 class="text-lg font-semibold text-gray-800 mb-2">Множество языков</h4>
-            <p class="text-sm text-gray-600">Изучайте языки со всего мира</p>
+            <h4 class="text-lg font-semibold text-gray-800 mb-2">Глубокая аналитика</h4>
+            <p class="text-sm text-gray-600">Анализируйте ваши работы и улучшайте свои навыки</p>
           </div>
 
           <div class="bg-white/80 backdrop-blur rounded-lg p-6 border border-green-100/50">
