@@ -1,3 +1,3 @@
 from .registration import VerifyCodeSerializer, CompleteRegistrationSerializer
-from .authentication import OTPSendSerializer, OTPTokenObtainSerializer
+from .authentication import OTPSendSerializer, OTPTokenObtainSerializer, TelegramAuthSerializer
 from .profile import UserProfileSerializer

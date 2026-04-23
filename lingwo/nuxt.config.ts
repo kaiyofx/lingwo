@@ -58,6 +58,7 @@ export default defineNuxtConfig({
       baseApiURL: process.env.NUXT_PUBLIC_BASE_API_URL,
       domain: process.env.NUXT_PUBLIC_DOMAIN,
       full_domain: process.env.NUXT_PUBLIC_FULL_DOMAIN,
+      telegramBotUsername: process.env.NUXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'lingwobot',
     },
   },
 })

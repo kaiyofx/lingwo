@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 from health_check.views import HealthCheckView
 # from users.oauth_views import OTPTokenView
-from users.views import OTPTokenObtainPairView, LogoutView, JwksView
+from users.views import OTPTokenObtainPairView, LogoutView, JwksView, TelegramTokenObtainView
 from rest_framework_simplejwt.views import TokenRefreshView, TokenBlacklistView
 
 urlpatterns = [
@@ -27,6 +27,7 @@ urlpatterns = [
     path("health/", HealthCheckView.as_view()),
     path("accounts/", include("django.contrib.auth.urls")),
     path("api/token/", OTPTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/telegram/", TelegramTokenObtainView.as_view(), name="token_obtain_telegram"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/token/logout/", TokenBlacklistView.as_view(), name="token_blacklist"),
     path('.well-known/jwks.json', JwksView.as_view(), name='jwks'),

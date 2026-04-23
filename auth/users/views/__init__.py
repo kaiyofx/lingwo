@@ -1,5 +1,5 @@
 from .registration import VerifyCodeView, CompleteRegistrationView
-from .authentication import OTPTokenObtainPairView, SendOTPView, LogoutView
+from .authentication import OTPTokenObtainPairView, SendOTPView, LogoutView, TelegramTokenObtainView
 from .profile import ProfileView
 from .recovery import RestoreUserView
 from .change_specific_fields import RequestUsernameChangeView, ConfirmUsernameChangeView, RequestEmailChangeView, ConfirmEmailChangeView

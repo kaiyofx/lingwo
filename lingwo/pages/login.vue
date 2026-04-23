@@ -11,6 +11,7 @@ definePageMeta({
 // Используем хук useAuth из @sidebase/nuxt-auth
 const { signIn } = useAuth();
 const router = useRouter();
+const runtimeConfig = useRuntimeConfig();
 
 const loginRef = ref('');
 const passwordRef = ref('');
@@ -27,6 +28,9 @@ const validPassword = (password: string) => {
 };
 
 const loadingButton = ref(false);
+const telegramLoading = ref(false);
+const telegramWidgetContainer = ref<HTMLDivElement | null>(null);
+const telegramBotUsername = computed(() => runtimeConfig.public.telegramBotUsername || 'lingwobot');
 
 const handleSignIn = async () => {
   loadingButton.value = true;
@@ -71,6 +75,79 @@ const handleSignIn = async () => {
     passwordRef.value = '';
   }
 };
+
+interface TelegramWidgetUser {
+  id: number;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
+}
+
+const handleTelegramSignIn = async (user: TelegramWidgetUser) => {
+  telegramLoading.value = true;
+  try {
+    const result = await signIn('credentials', {
+      telegramAuth: JSON.stringify(user),
+      rememberMe: rememberMeRef.value.toString(),
+      redirect: false
+    });
+
+    if (result?.error) {
+      toast.error("Ошибка", {
+        description: "Не удалось авторизоваться через Telegram"
+      });
+      return;
+    }
+
+    toast.success("Успех", {
+      description: "Вход через Telegram выполнен"
+    });
+    await router.push('/');
+  } catch (error) {
+    console.error("Ошибка Telegram авторизации:", error);
+    toast.error("Ошибка", {
+      description: "Произошла ошибка при входе через Telegram"
+    });
+  } finally {
+    telegramLoading.value = false;
+  }
+};
+
+const mountTelegramWidget = () => {
+  if (!process.client || !telegramWidgetContainer.value) {
+    return;
+  }
+
+  telegramWidgetContainer.value.innerHTML = '';
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://telegram.org/js/telegram-widget.js?23';
+  script.setAttribute('data-telegram-login', telegramBotUsername.value);
+  script.setAttribute('data-size', 'large');
+  script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+  script.setAttribute('data-request-access', 'write');
+  telegramWidgetContainer.value.appendChild(script);
+};
+
+onMounted(() => {
+  if (!process.client) {
+    return;
+  }
+  (window as any).onTelegramAuth = (user: TelegramWidgetUser) => {
+    handleTelegramSignIn(user);
+  };
+  mountTelegramWidget();
+});
+
+onBeforeUnmount(() => {
+  if (!process.client) {
+    return;
+  }
+  delete (window as any).onTelegramAuth;
+});
 
 useHead({ title: "Авторизация - Лингво" });
 </script>
@@ -152,6 +229,20 @@ useHead({ title: "Авторизация - Лингво" });
           </div>
         </div>
       </form>
+
+      <div class="my-6 flex items-center">
+        <div class="h-px flex-1 bg-gray-200"></div>
+        <span class="px-3 text-xs text-gray-500 uppercase">или</span>
+        <div class="h-px flex-1 bg-gray-200"></div>
+      </div>
+
+      <div class="space-y-2">
+        <p class="text-center text-sm text-gray-600">Войти через Telegram</p>
+        <div ref="telegramWidgetContainer" class="flex justify-center min-h-10"></div>
+        <div v-if="telegramLoading" class="flex justify-center py-1">
+          <div class="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
 
       <!-- Register Link -->
       <div class="mt-6 text-center">
