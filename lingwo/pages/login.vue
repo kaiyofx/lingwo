@@ -29,6 +29,7 @@ const validPassword = (password: string) => {
 
 const loadingButton = ref(false);
 const telegramLoading = ref(false);
+const telegramWidgetError = ref('');
 const telegramWidgetContainer = ref<HTMLDivElement | null>(null);
 const telegramBotUsername = computed(() => runtimeConfig.public.telegramBotUsername || 'lingwobot');
 
@@ -121,6 +122,7 @@ const mountTelegramWidget = () => {
     return;
   }
 
+  telegramWidgetError.value = '';
   telegramWidgetContainer.value.innerHTML = '';
   const script = document.createElement('script');
   script.async = true;
@@ -129,6 +131,19 @@ const mountTelegramWidget = () => {
   script.setAttribute('data-size', 'large');
   script.setAttribute('data-onauth', 'onTelegramAuth(user)');
   script.setAttribute('data-request-access', 'write');
+  script.onerror = () => {
+    telegramWidgetError.value = 'Не удалось загрузить Telegram Widget. Проверьте блокировщик рекламы, CSP и доступ к telegram.org.';
+  };
+  script.onload = () => {
+    setTimeout(() => {
+      const root = telegramWidgetContainer.value;
+      const widgetRendered = !!root?.querySelector('iframe, div[id^="telegram-login-"], script + *');
+      if (!widgetRendered) {
+        telegramWidgetError.value =
+          'Telegram Widget не отрисовался. Частая причина: домен не привязан в BotFather (/setdomain) или используется неподдерживаемый домен.';
+      }
+    }, 1200);
+  };
   telegramWidgetContainer.value.appendChild(script);
 };
 
@@ -239,6 +254,9 @@ useHead({ title: "Авторизация - Лингво" });
       <div class="space-y-2">
         <p class="text-center text-sm text-gray-600">Войти через Telegram</p>
         <div ref="telegramWidgetContainer" class="flex justify-center min-h-10"></div>
+        <p v-if="telegramWidgetError" class="text-xs text-red-500 text-center">
+          {{ telegramWidgetError }}
+        </p>
         <div v-if="telegramLoading" class="flex justify-center py-1">
           <div class="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
