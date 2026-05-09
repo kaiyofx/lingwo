@@ -83,6 +83,7 @@ APP.add_middleware(
 _cached_themes: Optional[List[str]] = None
 _qdrant_client: Optional[QdrantClient] = None
 _embedding_model: Optional[SentenceTransformer] = None
+_theme_embedding_cache: Dict[str, List[float]] = {}
 
 
 async def get_current_user(
@@ -256,6 +257,48 @@ def _random_theme_from_sections(sections: List[str]) -> str:
     return random.choice(candidate_themes)
 
 
+def _dot(a: List[float], b: List[float]) -> float:
+    return sum(x * y for x, y in zip(a, b))
+
+
+def _get_theme_embedding(theme: str) -> List[float]:
+    cached = _theme_embedding_cache.get(theme)
+    if cached is not None:
+        return cached
+
+    model = _get_embedding_model()
+    emb = model.encode(theme, normalize_embeddings=True).tolist()
+    _theme_embedding_cache[theme] = emb
+    return emb
+
+
+def _pick_far_themes_from_history(
+    pool: List[str],
+    past_themes: List[str],
+    top_k: int = 10,
+) -> List[str]:
+    if not pool:
+        return []
+    if not past_themes:
+        return pool[: min(top_k, len(pool))]
+
+    unique_past = list(dict.fromkeys(t.strip() for t in past_themes if t and t.strip()))
+    if not unique_past:
+        return pool[: min(top_k, len(pool))]
+
+    past_embeddings = [_get_theme_embedding(t) for t in unique_past]
+
+    scored: List[tuple[float, str]] = []
+    for theme in pool:
+        theme_emb = _get_theme_embedding(theme)
+        # Чем меньше max cosine similarity с историей, тем тема "дальше".
+        max_sim = max(_dot(theme_emb, past_emb) for past_emb in past_embeddings)
+        scored.append((max_sim, theme))
+
+    scored.sort(key=lambda item: (item[0], item[1]))
+    return [theme for _, theme in scored[: min(top_k, len(scored))]]
+
+
 def _redis_key(user_id: str) -> str:
     return f"essay:active:{user_id}"
 
@@ -376,8 +419,20 @@ async def recommended_topic(
     classified = _load_classified_themes()
     pool = classified.get(level, classified["middle"])
 
+    past_themes_result = await session.execute(
+        select(Essay.theme)
+        .where(Essay.user_id == claim.user_id, Essay.theme.isnot(None))
+        .order_by(Essay.ended_at.desc())
+        .limit(300)
+    )
+    past_themes = [t for t in past_themes_result.scalars().all() if isinstance(t, str) and t.strip()]
+
+    candidate_pool = _pick_far_themes_from_history(pool, past_themes, top_k=10)
+    if not candidate_pool:
+        candidate_pool = pool
+
     today = date.today()
-    theme = _pick_daily_theme(pool, claim.user_id, today)
+    theme = _pick_daily_theme(candidate_pool, claim.user_id, today)
 
     return RecommendedTopicResponse(
         theme=theme,

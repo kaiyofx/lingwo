@@ -3,6 +3,7 @@ from rest_framework.serializers import (
     CharField,
     EmailField,
     ChoiceField,
+    IntegerField,
     ValidationError,
 )
 from django.utils.translation import gettext_lazy as _
@@ -185,3 +186,26 @@ class OTPTokenObtainSerializer(TokenObtainPairSerializer):
         user.lockout_time = None
         user.save()
         return data
+
+
+class TelegramAuthSerializer(Serializer):
+    id = IntegerField(min_value=1)
+    first_name = CharField(required=False, allow_blank=True, max_length=255)
+    last_name = CharField(required=False, allow_blank=True, max_length=255)
+    username = CharField(required=False, allow_blank=True, max_length=255)
+    photo_url = CharField(required=False, allow_blank=True, max_length=2048)
+    auth_date = IntegerField(min_value=1)
+    hash = CharField(min_length=32, max_length=128)
+
+    def validate(self, attrs):
+        auth_date = attrs.get("auth_date")
+        if auth_date is None:
+            raise ValidationError({"auth_date": _("Отсутствует время авторизации Telegram.")})
+
+        now_ts = int(timezone.now().timestamp())
+        max_age_seconds = 5 * 60
+        if auth_date > now_ts + 30:
+            raise ValidationError({"auth_date": _("Некорректное время авторизации Telegram.")})
+        if now_ts - auth_date > max_age_seconds:
+            raise ValidationError({"auth_date": _("Сессия Telegram устарела. Повторите вход.")})
+        return attrs

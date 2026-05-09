@@ -138,10 +138,11 @@ function renderTextWithMistakes(text: string, mistakes: EssayDetail['common_mist
     if (mistakeObj && typeof mistakeObj === 'object' && Array.isArray(mistakeObj.ranges)) {
       for (const range of mistakeObj.ranges) {
         if (Array.isArray(range) && range.length === 2) {
-          const [start, end] = range
-          if (typeof start === 'number' && typeof end === 'number' && 
+          const start = Number(range[0])
+          const end = Number(range[1])
+          if (Number.isFinite(start) && Number.isFinite(end) &&
               start >= 0 && end > start && end <= text.length) {
-            errorRanges.push({ start, end, mistake: mistakeObj })
+            errorRanges.push({ start: Math.floor(start), end: Math.floor(end), mistake: mistakeObj })
           }
         }
       }

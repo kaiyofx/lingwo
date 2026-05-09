@@ -69,6 +69,18 @@
 - auth: http://localhost:8000  
 - Qdrant: http://localhost:6333  
 
+### Переменные
+
+**PostgreSQL** (сервисы `pg`, `api`; для auth при использовании той же БД):
+- `PG_USER`, `PG_PASSWORD`, `PG_NAME` — пользователь, пароль, имя БД (в compose по умолчанию: `postgres`, `1234`, `lingwo`)
+- При запуске через Docker для auth: `PG_HOST=pg`, `PG_PORT=5432`
+
+**Redis** (auth, api): `REDIS_URL`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
+
+**API**: `DATABASE_URL` в compose собирается из PG_*; при необходимости — `QDRANT_HOST`, `QDRANT_PORT`, `QDRANT_COLLECTION_NAME`, `EMBEDDING_MODEL_NAME`, `THEMES_PATH`. Для оценки сочинений используется [Pollinations API](https://enter.pollinations.ai): задайте `POLLINATIONS_API_KEY` (ключ на enter.pollinations.ai), опционально `POLLINATIONS_MODEL` (по умолчанию `gemini-fast`), `POLLINATIONS_BASE_URL` (по умолчанию `https://gen.pollinations.ai`).
+
+**Auth**: `AUTHSECRET_KEY`, `SIGNING_KEY`, `VERIFYING_KEY`, `AUTH_SECRET`, переменные для почты (`EMAIL_HOST`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` и т.д.) — см. `.env.example` или существующий `.env`
+
 ## Функционал
 
 - Предложение тем для сочинений

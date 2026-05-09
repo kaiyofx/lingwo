@@ -112,6 +112,7 @@ export default NuxtAuthHandler({
         email: { label: "Email", type: "text" },
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
+        telegramAuth: { label: "Telegram Auth", type: "text", required: false },
         rememberMe: {
           label: "Remember Me",
           type: "checkbox",
@@ -123,17 +124,37 @@ export default NuxtAuthHandler({
         try {
           const rememberMe = credentials?.rememberMe === true || 
                            credentials?.rememberMe === "true";
+          const telegramAuthRaw = credentials?.telegramAuth;
 
           console.log(`🔐 Login attempt, rememberMe: ${rememberMe}`);
 
-          const res = await fetch(`${process.env.NUXT_AUTH_URL}/api/token/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+          const endpoint = telegramAuthRaw
+            ? `${process.env.NUXT_AUTH_URL}/api/token/telegram/`
+            : `${process.env.NUXT_AUTH_URL}/api/token/`;
+          let requestBody: Record<string, unknown>;
+
+          if (telegramAuthRaw) {
+            let parsedTelegramAuth: Record<string, unknown> | null = null;
+            try {
+              parsedTelegramAuth =
+                typeof telegramAuthRaw === "string" ? JSON.parse(telegramAuthRaw) : telegramAuthRaw;
+            } catch (parseError) {
+              console.error("Invalid telegramAuth payload", parseError);
+              return null;
+            }
+            requestBody = parsedTelegramAuth ?? {};
+          } else {
+            requestBody = {
               user_email: credentials?.email,
               username: credentials?.username,
               password: credentials?.password,
-            }),
+            };
+          }
+
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody),
           });
 
           if (!res.ok) {
